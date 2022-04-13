@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Encoding">
+    <file url="file://$PROJECT_DIR$/api-aws/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/api-aws/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/api-azure/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/api-azure/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/api-openstack/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/api-openstack/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/api-toast/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/core-aws/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/core-aws/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/core-azure/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/core-azure/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/core-db/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/core-db/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/core-openstack/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/core-openstack/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/core-toast/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/core/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/core/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/service-registry/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/service-registry/src/main/resources" charset="UTF-8" />
+  </component>
+</project>

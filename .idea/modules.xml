@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/api-aws/api-aws.iml" filepath="$PROJECT_DIR$/api-aws/api-aws.iml" />
+      <module fileurl="file://$PROJECT_DIR$/api-azure/api-azure.iml" filepath="$PROJECT_DIR$/api-azure/api-azure.iml" />
+      <module fileurl="file://$PROJECT_DIR$/api-openstack/api-openstack.iml" filepath="$PROJECT_DIR$/api-openstack/api-openstack.iml" />
+      <module fileurl="file://$PROJECT_DIR$/api-toast/api-toast.iml" filepath="$PROJECT_DIR$/api-toast/api-toast.iml" />
+      <module fileurl="file://$PROJECT_DIR$/core/core.iml" filepath="$PROJECT_DIR$/core/core.iml" />
+      <module fileurl="file://$PROJECT_DIR$/core-aws/core-aws.iml" filepath="$PROJECT_DIR$/core-aws/core-aws.iml" />
+      <module fileurl="file://$PROJECT_DIR$/core-azure/core-azure.iml" filepath="$PROJECT_DIR$/core-azure/core-azure.iml" />
+      <module fileurl="file://$PROJECT_DIR$/core-db/core-db.iml" filepath="$PROJECT_DIR$/core-db/core-db.iml" />
+      <module fileurl="file://$PROJECT_DIR$/core-openstack/core-openstack.iml" filepath="$PROJECT_DIR$/core-openstack/core-openstack.iml" />
+      <module fileurl="file://$PROJECT_DIR$/core-toast/core-toast.iml" filepath="$PROJECT_DIR$/core-toast/core-toast.iml" />
+      <module fileurl="file://$PROJECT_DIR$/root.iml" filepath="$PROJECT_DIR$/root.iml" />
+      <module fileurl="file://$PROJECT_DIR$/service-registry/service-registry.iml" filepath="$PROJECT_DIR$/service-registry/service-registry.iml" />
+    </modules>
+  </component>
+</project>
