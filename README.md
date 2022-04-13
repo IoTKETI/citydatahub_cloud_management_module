@@ -8,9 +8,6 @@
 
   ![1](https://user-images.githubusercontent.com/23303734/163107199-28790644-ec4a-4dae-ae8f-4df0d2e38a53.png)
 
-
-  
-
 ### Citydatahub Cloud Management Module Architecture
 
 + 데이터 허브 클라우드 관리 모듈은 도시 생활의 편의성 향상, 개별화된 사용자 서비스 제공, 효율적인 도시 운영, 스마트 시티 통합 운영 관리 등 스마트 시티 시스템의 다양한 데이터 저장 및 처리와 하이브리드 클라우드 인프라를 관리하는 모듈입니다.
@@ -25,9 +22,7 @@
 
 + 마지막으로 가상 자원 관리 레이어에서는 서버 가상화, 네트워크 가상화, 스토리지 가상화, 클라우드 자원 프로비저닝, 고성능 장치 연계, 퍼블릭/프라이빗 클라우드 인증 및 관리 기능을 지원합니다.
 
-  ![image-20220411172514958](.\그림파일\1. 클라우드 관리 모듈 개요\3.png)
-
-  
+  ![3](https://user-images.githubusercontent.com/23303734/163107314-7046860e-75c5-4892-8a04-22628905750a.png)
 
 + 데이터 허브 클라우드 관리 모듈에는 퍼블릭/프라이빗 클라우드를 연동 및 자원 관리, 서비스 사용자에 따른 인증/권한 관리 등을 위한 하이브리드 클라우드 관리 매니저가 있습니다.
 
@@ -40,9 +35,7 @@
   + 오케스트레이션 관리 모듈은 클라우드 시스템 통합자동화와 가상자원의 배치 및 설정을 비롯해 프로비저닝을 중심으로 하여 통합 자동화를 관리하는 기능을 제공합니다.
   + 오토스케일링 관리 모듈은 클라우드의 자원을 효율적으로 사용하기 위해 클라우드의 자원 상태에 따라 자동으로 VM을 생성하거나 삭제 할 수 있도록 관리하는 기능을 제공합니다.
 
-![image-20220411173547993](.\그림파일\1. 클라우드 관리 모듈 개요\4.png)
-
-
+![4](https://user-images.githubusercontent.com/23303734/163107342-a61c2993-af3f-4140-b0da-2e33e9e92cde.png)
 
 ### Citydatahub Cloud Management Module Setting
 
@@ -60,8 +53,6 @@
 + Generate sources and update folder for all projects
     + Code update 후 Maven update
     + root 선택후 clean -> complie -> install 순으로 Maven Update 
-
-
 
 ### Start Citydatahub Cloud Management Module
 + Application 실행
