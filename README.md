@@ -6,7 +6,7 @@
 
 + 현재 데이터 허브 클라우드 관리 모듈에서 관리하고 있는 클라우드는 총 4종으로 3종의 퍼블릭 클라우드(AWS, Azure, TOAST)와 1종의 프라이빗 클라우드(OpenStack)로 관리자가 원하는 클라우드 인프라에 대한 서비스 관리 및 제어를 할 수 있습니다.
 
-![1](https://user-images.githubusercontent.com/23303734/163107199-28790644-ec4a-4dae-ae8f-4df0d2e38a53.png)
+![1핵심 개요](https://user-images.githubusercontent.com/23303734/163297040-d2b9712d-0bbb-4321-869c-6c2ca2b39e4a.png)  
 
 ### Citydatahub Cloud Management Module Architecture
 
@@ -22,7 +22,7 @@
 
 + 마지막으로 가상 자원 관리 레이어에서는 서버 가상화, 네트워크 가상화, 스토리지 가상화, 클라우드 자원 프로비저닝, 고성능 장치 연계, 퍼블릭/프라이빗 클라우드 인증 및 관리 기능을 지원합니다.
 
-![1핵심 개요](https://user-images.githubusercontent.com/23303734/163297040-d2b9712d-0bbb-4321-869c-6c2ca2b39e4a.png)  
+![1](https://user-images.githubusercontent.com/23303734/163107199-28790644-ec4a-4dae-ae8f-4df0d2e38a53.png)
 
 + 데이터 허브 클라우드 관리 모듈에는 퍼블릭/프라이빗 클라우드를 연동 및 자원 관리, 서비스 사용자에 따른 인증/권한 관리 등을 위한 하이브리드 클라우드 관리 매니저가 있습니다.
 
