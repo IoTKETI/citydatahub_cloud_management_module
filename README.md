@@ -5,9 +5,9 @@
 + 데이터 허브 클라우드 관리 모듈은 다양한 이종 클라우드(퍼블릭 및 프라이빗 클라우드)를 연동하고, 분산되어 있는 이종 클라우드 팜들에서 효과적으로 스마트시티 서비스를 위한 가상 자원을 제공하여 멀티 클라우드 환경에서 스마트시티 서비스 인프라를 관리하는 기술을 제공합니다.
 
 + 현재 데이터 허브 클라우드 관리 모듈에서 관리하고 있는 클라우드는 총 4종으로 3종의 퍼블릭 클라우드(AWS, Azure, TOAST)와 1종의 프라이빗 클라우드(OpenStack)로 관리자가 원하는 클라우드 인프라에 대한 서비스 관리 및 제어를 할 수 있습니다.
-<div align="center">
-  ![1](https://user-images.githubusercontent.com/23303734/163107199-28790644-ec4a-4dae-ae8f-4df0d2e38a53.png)
-</div>
+
+<div align="center>  ![1](https://user-images.githubusercontent.com/23303734/163107199-28790644-ec4a-4dae-ae8f-4df0d2e38a53.png) </div>
+
 ### Citydatahub Cloud Management Module Architecture
 
 + 데이터 허브 클라우드 관리 모듈은 도시 생활의 편의성 향상, 개별화된 사용자 서비스 제공, 효율적인 도시 운영, 스마트 시티 통합 운영 관리 등 스마트 시티 시스템의 다양한 데이터 저장 및 처리와 하이브리드 클라우드 인프라를 관리하는 모듈입니다.
