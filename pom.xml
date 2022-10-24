@@ -25,6 +25,7 @@
         <module>api-azure</module>
         <module>api-openstack</module>
         <module>api-toast</module>
+        <module>client</module>
         <module>service-registry</module>
 
     </modules>

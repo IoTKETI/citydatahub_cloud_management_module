@@ -12,6 +12,7 @@ public class CreateNetworkInfo implements Serializable {
     private Boolean adminStateUp;
     private String[] availabilityZones;
 
+    //API Create Network
     private Boolean networkManaged;
     private Boolean networkShared;
 

@@ -147,8 +147,8 @@
     <orderEntry type="library" name="Maven: com.nimbusds:oauth2-oidc-sdk:5.64.4" level="project" />
     <orderEntry type="library" name="Maven: com.sun.mail:javax.mail:1.6.2" level="project" />
     <orderEntry type="library" name="Maven: com.github.stephenc.jcip:jcip-annotations:1.0-1" level="project" />
-    <orderEntry type="library" name="Maven: com.nimbusds:lang-tag:1.6" level="project" />
-    <orderEntry type="library" name="Maven: com.nimbusds:nimbus-jose-jwt:9.21" level="project" />
+    <orderEntry type="library" name="Maven: com.nimbusds:lang-tag:1.7" level="project" />
+    <orderEntry type="library" name="Maven: com.nimbusds:nimbus-jose-jwt:9.25.6" level="project" />
     <orderEntry type="library" name="Maven: com.microsoft.azure:azure-annotations:1.7.0" level="project" />
     <orderEntry type="library" name="Maven: com.microsoft.azure:azure-mgmt-resources:1.20.0" level="project" />
     <orderEntry type="library" name="Maven: com.microsoft.azure:azure-mgmt-storage:1.20.0" level="project" />

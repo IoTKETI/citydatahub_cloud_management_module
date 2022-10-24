@@ -22,6 +22,7 @@ public class DiskInfo2 implements Serializable {
     private String resourceGroup;
     private int size;
     @JsonProperty("volumeState")
+//    private String isAttached;
     private String isAttached;
     @JsonSerialize(using = JsonDateSerializer.class)
     @JsonDeserialize(using = JsonDateDeserializer.class)

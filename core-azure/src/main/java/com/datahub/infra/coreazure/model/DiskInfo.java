@@ -1,5 +1,9 @@
 package com.datahub.infra.coreazure.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.datahub.infra.coreazure.util.JsonDateDeserializer;
+import com.datahub.infra.coreazure.util.JsonDateSerializer;
 import com.microsoft.azure.management.compute.Disk;
 import lombok.Data;
 
@@ -20,6 +24,8 @@ public class DiskInfo implements Serializable {
     private String subscriptionId;
     private String subscriptionDisplayName;
     private boolean isAttached;
+    @JsonSerialize(using = JsonDateSerializer.class)
+    @JsonDeserialize(using = JsonDateDeserializer.class)
     private String created;
     private List<String> availityZone;
     private String os;

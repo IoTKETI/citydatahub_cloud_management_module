@@ -57,5 +57,6 @@ public class ServerInfo implements Serializable {
         this.publicIp = info.publicIpAddress();
         this.publicDns = info.publicDnsName();
         this.createdAt = Timestamp.from(info.launchTime());
+
     }
 }

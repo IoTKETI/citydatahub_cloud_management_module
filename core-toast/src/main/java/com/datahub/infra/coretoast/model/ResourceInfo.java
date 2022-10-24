@@ -4,11 +4,6 @@ import lombok.Data;
 
 import java.io.Serializable;
 
-/**
- * @author ksg
- * @date 2020.6.5
- * @brief Toast Resource 모델
- */
 
 @Data
 public class ResourceInfo implements Serializable {

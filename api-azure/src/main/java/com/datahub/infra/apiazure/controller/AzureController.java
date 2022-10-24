@@ -2,14 +2,14 @@ package com.datahub.infra.apiazure.controller;
 
 import com.datahub.infra.apiazure.service.AzureService;
 import com.datahub.infra.core.model.CredentialInfo;
+import com.datahub.infra.core.model.ImageDetailInfo;
 import com.datahub.infra.core.util.AES256Util;
 import com.datahub.infra.core.util.ObjectSerializer;
-import com.datahub.infra.coreazure.model.DeleteInfo;
-import com.datahub.infra.coreazure.model.DiskInfo;
-import com.datahub.infra.coreazure.model.NetworkInfo;
-import com.datahub.infra.coreazure.model.ServerInfo;
+import com.datahub.infra.coreazure.model.*;
 import com.datahub.infra.coredb.dao.CredentialDao;
 import com.datahub.infra.coredb.service.CredentialService;
+import com.datahub.infra.coredb.service.ImageService;
+import com.microsoft.azure.management.compute.VirtualMachineImage;
 import net.minidev.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.HandlerMapping;
 
 import javax.servlet.http.HttpServletRequest;
+import java.math.BigDecimal;
 import java.util.*;
 
 @Controller
@@ -34,6 +35,9 @@ public class AzureController {
     private AzureService azureService;
 
     @Autowired
+    private ImageService imageService;
+
+    @Autowired
     private CredentialService credentialService;
 
     @Autowired
@@ -42,7 +46,7 @@ public class AzureController {
     @Autowired
     private AES256Util aes256Util;
 
-    @RequestMapping(value = {"","/"}, method = RequestMethod.GET)
+    @RequestMapping(value = {"","/"}, method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     @ResponseBody
     public List<CredentialInfo> getCredentialAzure(@RequestHeader(value = "credential") String credential) {
 
@@ -90,6 +94,16 @@ public class AzureController {
             webCheck = false;
         }
         return azureService.getServer(credentialInfo, serverId, webCheck);
+    }
+
+    @RequestMapping(value = "/images", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @ResponseBody
+    public List<ImageInfo> getImages(
+            @RequestHeader(value = "credential") String credential) {
+
+        CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
+
+        return  azureService.getImages(credentialInfo);
     }
 
     @RequestMapping(value = "/volumes", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
@@ -165,11 +179,14 @@ public class AzureController {
 
         CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
 
+        // /All Path
         final String path =
                 request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE).toString();
+        // /** Path
         final String bestMatchingPattern =
                 request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE).toString();
 
+        // arguments = path - bestMatchingPattern
         String arguments = new AntPathMatcher().extractPathWithinPattern(bestMatchingPattern, path);
 
         String moduleName;
@@ -295,6 +312,7 @@ public class AzureController {
         } else {
             moduleName = subscriptions;
         }
+//        System.out.println("############# = " + moduleName);
         if(webCheck==null){
             webCheck=false;
         } else if(!webCheck) {
@@ -338,6 +356,170 @@ public class AzureController {
         return azureService.deleteNetwork(credentialInfo, moduleName, webCheck);
     }
 
+    @RequestMapping(value = "/isusableipchk", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @ResponseBody
+    public Map<String, String> getIsUsableIpchk (
+            @RequestHeader(value = "credential") String credential,
+            @RequestParam(value = "network") String network,
+            @RequestParam(value = "privateIp") String privateIp
+    ) {
+
+        CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
+
+//        Map<String, Object> params = new HashMap<>();
+//        params.put("network", network);
+//        params.put("privateIp", privateIp);
+
+        return azureService.getIsUsableIp(credentialInfo, network, privateIp);
+
+    }
+
+    @RequestMapping(value = "/publicips", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @ResponseBody
+    public List<PublicIpInfo> getPublicIps(
+            @RequestHeader(value = "credential") String credential,
+            @RequestParam(value = "resourceGroup", required = false) String resourceGroup,
+            @RequestParam(value = "region", required = false) String region
+    ) {
+
+        CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
+
+        return azureService.getPublicIps(credentialInfo, resourceGroup, region);
+    }
+
+    @RequestMapping(value = "/loadbalancers", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @ResponseBody
+    public List<LoadBalancerInfo> getLoadBalancers(
+            @RequestHeader(value = "credential") String credential) {
+
+        CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
+
+        return  azureService.getLoadBalancers(credentialInfo);
+    }
+
+    @RequestMapping(value = "/securitygroups", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @ResponseBody
+    public List<SecurityGroupInfo> getSecurityGroups(
+            @RequestHeader(value = "credential") String credential) {
+
+        CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
+
+        return azureService.getSecurityGroups(credentialInfo);
+    }
+
+    @RequestMapping(value = "/activedirectorygroups", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @ResponseBody
+    public List<ActiveDirectoryGroupInfo> getActiveDirectoryGroups(
+            @RequestHeader(value = "credential") String credential) {
+
+        CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
+
+        return azureService.getActiveDirectoryGroups(credentialInfo);
+    }
+
+    @RequestMapping(value = "/activedirectoryusers", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @ResponseBody
+    public List<ActiveDirectoryUserInfo> getActiveDirectoryUsers(
+            @RequestHeader(value = "credential") String credential) {
+
+        CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
+
+        return azureService.getActiveDirectoryUsers(credentialInfo);
+    }
+
+    @RequestMapping(value = "/storageaccounts", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @ResponseBody
+    public List<StorageAccountInfo> getStorageAccounts(
+            @RequestHeader(value = "credential") String credential) {
+
+        CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
+
+        return azureService.getStorageAccounts(credentialInfo);
+    }
+
+    @RequestMapping(value = "/genericresources", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @ResponseBody
+    public List<GenericResourceInfo> getGenericResources(
+            @RequestHeader(value = "credential") String credential) {
+
+        CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
+
+        return azureService.getGenericResources(credentialInfo);
+    }
+
+    @RequestMapping(value = "/genericresourcessummary", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @ResponseBody
+    public Map<String, Integer> getGenericResourcesSummary(
+            @RequestHeader(value = "credential") String credential) {
+
+        CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
+
+        Map<String, Integer> list = azureService.getGenericResourcesSummary(credentialInfo);
+
+        return list;
+    }
+
+    @ResponseStatus(HttpStatus.CREATED)
+    @RequestMapping(value = "/servers/{id}/start", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public @ResponseBody
+    ServerInfo startServer(
+            @RequestHeader(value = "credential") String credential,
+            @PathVariable(value = "id") String serverId
+    ) {
+        CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
+
+        serverId = new String(Base64.getDecoder().decode(serverId));
+
+        return azureService.start(credentialInfo, serverId);
+    }
+
+    @ResponseStatus(HttpStatus.CREATED)
+    @RequestMapping(value = "/servers/{id}/stop", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public @ResponseBody
+    ServerInfo stopServer(
+            @RequestHeader(value = "credential") String credential,
+            @PathVariable(value = "id") String serverId
+    ) {
+        CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
+
+        serverId = new String(Base64.getDecoder().decode(serverId));
+
+        return azureService.stop(credentialInfo, serverId);
+    }
+
+    @ResponseStatus(HttpStatus.CREATED)
+    @RequestMapping(value = "/servers/{id}/reboot", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public @ResponseBody
+    ServerInfo rebootServer(
+            @RequestHeader(value = "credential") String credential,
+            @PathVariable(value = "id") String serverId
+    ) {
+        CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
+
+        serverId = new String(Base64.getDecoder().decode(serverId));
+
+        return azureService.reboot(credentialInfo, serverId);
+    }
+
+    @ResponseStatus(HttpStatus.CREATED)
+    @RequestMapping(value = "/servers/{id}/delete", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @ResponseBody
+    public void deleteServer(
+            @RequestHeader(value = "credential") String credential,
+            @RequestParam(required = false) Boolean webCheck,
+            @PathVariable(value = "id") String serverId
+    ) {
+        CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
+
+        serverId = new String(Base64.getDecoder().decode(serverId));
+
+        if(webCheck==null){
+            webCheck=false;
+        }
+
+        azureService.delete(credentialInfo, serverId, webCheck);
+    }
+
     @RequestMapping(value = "/servers/{id}", method = RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     @ResponseBody
     public void deleteServer2(
@@ -355,6 +537,34 @@ public class AzureController {
 
         azureService.delete(credentialInfo, serverId, webCheck);
     }
+
+    @RequestMapping(value = "/servers/{id}/metric", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @ResponseBody
+    public Map<String, Object> getServerMetric(
+            @RequestHeader(value = "credential") String credential,
+            @PathVariable(value = "id") String id,
+            @RequestParam(value = "endDate") String endDate,
+            @RequestParam(value = "startDate") String startDate,
+            @RequestParam(value = "InstanceId", required = false, defaultValue = "InstanceId") String name,
+            @RequestParam(value = "metricName") String metricName,
+            @RequestParam(value = "interval") Integer interval,
+            @RequestParam(value = "statistic") String statistic
+    ){
+        CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
+
+        RequestMetricInfo requestMetricInfo = new RequestMetricInfo();
+        requestMetricInfo.setId(new String(Base64.getDecoder().decode(id)));
+        requestMetricInfo.setEndDate(new Date(Long.parseLong(endDate)));
+        requestMetricInfo.setStartDate(new Date(Long.parseLong(startDate)));
+        requestMetricInfo.setName(name);
+        requestMetricInfo.setMetricName(metricName);
+        requestMetricInfo.setInterval(interval);
+        requestMetricInfo.setStatistic(statistic);
+
+        return azureService.getServerMetric(credentialInfo, requestMetricInfo);
+    }
+
+
 
     @RequestMapping(value = "/servers/{subscriptions}/**", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     @ResponseBody
@@ -433,6 +643,41 @@ public class AzureController {
         return azureService.deleteServer_test(credentialInfo, moduleName);
     }
 
+    @RequestMapping(value = "/resourcegroups", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @ResponseBody
+    public List<ResourceGroupInfo> getResourceGroup(
+            @RequestHeader(value = "credential") String credential,
+            @RequestParam(value = "region", required = false) String region
+    ) {
+
+        CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
+        //if(region != null) credentialInfo.setRegion(region);
+
+        return azureService.getResourceGroups(credentialInfo, region);
+    }
+
+    @RequestMapping(value = "/sizes", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @ResponseBody
+    public List<SizeInfo> getSizes(
+            @RequestHeader(value = "credential") String credential,
+            @RequestParam(value = "region", required = false) String region
+    ) {
+        CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
+
+        return azureService.getSizes(credentialInfo, region);
+    }
+
+    @RequestMapping(value = "/dashboarddata", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @ResponseBody
+    public Map<String, Map> getDashboard(
+            @RequestHeader(value = "credential") String credential
+    ){
+
+        CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
+
+        return azureService.getDashboard(credentialInfo);
+    }
+
     @ResponseStatus(HttpStatus.CREATED)
     @RequestMapping(value = "/servers", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public @ResponseBody
@@ -449,6 +694,77 @@ public class AzureController {
         }
 
         return azureService.createServer(credentialInfo, createData, webCheck);
+    }
+
+    @RequestMapping(value = "/subscriptions", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @ResponseBody
+    public List<SubscriptionInfo> getSubscriptions(
+            @RequestHeader(value = "credential") String credential
+    ) {
+
+        CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
+
+        return azureService.getSubscriptions(credentialInfo);
+    }
+
+    @RequestMapping(value = "/regions", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @ResponseBody
+    public List<RegionInfo> getRegions(
+            @RequestHeader(value = "credential") String credential
+    ) {
+
+        CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
+
+        return azureService.getRegions(credentialInfo);
+    }
+
+    @RequestMapping(value = "/validate", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @ResponseBody
+    public Map<String, Boolean> checkValidate(
+            @RequestHeader(value = "credential") String credential
+    ) {
+
+        CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
+
+        return new HashMap<String, Boolean> (){{
+            put("result", azureService.validateCredential(credentialInfo));
+        }};
+    }
+
+    @RequestMapping(value = "/resource", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @ResponseBody
+    public ResourceInfo getResource(
+            @RequestHeader(value = "credential") String credential
+    ) {
+
+        CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
+
+        return azureService.getResourceUsage(credentialInfo);
+    }
+
+    @RequestMapping(value = "/imagedetail/{imageId}", method = RequestMethod.GET)
+    @ResponseBody
+    public VirtualMachineImage getImageDetail(
+            @RequestHeader(value = "credential") String credential,
+            @PathVariable(value = "imageId") String imageId,
+            @RequestParam(value = "region") String region
+    ) {
+
+        CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
+
+        return azureService.getImageDetail(credentialInfo, region, imageId);
+    }
+
+    @RequestMapping(value = "/publicimages", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @ResponseBody
+    public List<ImageDetailInfo> getPublicImages(
+            @RequestHeader(value = "credential") String credential,
+            @RequestParam(value = "location") String location
+    ) {
+
+        CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
+
+        return imageService.getImageDetails("azure", location);
     }
 
     @RequestMapping(value = "/{id}", method = RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)

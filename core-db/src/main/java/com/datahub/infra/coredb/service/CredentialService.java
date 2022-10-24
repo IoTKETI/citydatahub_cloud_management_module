@@ -13,5 +13,6 @@ public interface CredentialService {
     List<CredentialInfo> getCredentials(Map<String, Object> params);
     int getTotal(Map<String, Object> params);
     CredentialInfo getCredentialInfo(Map<String, Object> params);
+    public CredentialInfo createCredentialApi(CredentialInfo info);
 
 }

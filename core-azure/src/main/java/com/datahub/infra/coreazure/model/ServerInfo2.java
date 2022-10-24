@@ -49,6 +49,7 @@ public class ServerInfo2 implements Serializable {
                        PagedList<ComputeSku> skuList,
                        PagedList<Disk> disks){
         this.id = java.util.Base64.getEncoder().encodeToString(vm.id().getBytes());
+//        this.id = vm.id();
         this.name = vm.inner().name();
         this.region = vm.inner().location();
         this.resourceGroupName = vm.resourceGroupName();

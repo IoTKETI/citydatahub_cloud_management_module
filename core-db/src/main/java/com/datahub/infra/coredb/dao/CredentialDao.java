@@ -12,6 +12,8 @@ public interface CredentialDao {
 
     CredentialInfo getCredentialInfo(Map<String, Object> params);
 
+    int createCredential(CredentialInfo info);
+
     int deleteCredential(CredentialInfo info);
 }
 

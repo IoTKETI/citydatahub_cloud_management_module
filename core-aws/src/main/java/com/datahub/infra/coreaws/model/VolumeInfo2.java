@@ -30,8 +30,6 @@ public class VolumeInfo2 implements Serializable {
     @JsonDeserialize(using = JsonDateDeserializer.class)
     private Timestamp createdAt;
 
-
-
     public VolumeInfo2() {
 
     }
@@ -53,6 +51,7 @@ public class VolumeInfo2 implements Serializable {
         else{
             this.encrypted = 0;
         }
+//        this.encrypted = info.encrypted();
         this.createdAt = Timestamp.from(info.createTime());
     }
 

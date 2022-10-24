@@ -16,6 +16,7 @@ import com.datahub.infra.core.exception.CredentialException;
 import com.datahub.infra.core.model.CredentialInfo;
 import com.datahub.infra.core.model.ImageDetailInfo;
 import com.datahub.infra.coreaws.model.*;
+import com.datahub.infra.coreaws.model.KeyPairInfo;
 import com.datahub.infra.coredb.dao.CredentialDao;
 import com.datahub.infra.coredb.service.ImageService;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -25,7 +26,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.cloudwatch.CloudWatchClient;
+import software.amazon.awssdk.services.cloudwatch.model.*;
+import software.amazon.awssdk.services.costexplorer.CostExplorerClient;
 import software.amazon.awssdk.services.ec2.Ec2Client;
 import software.amazon.awssdk.services.ec2.model.Tag;
 import software.amazon.awssdk.services.ec2.model.*;
@@ -33,6 +38,17 @@ import software.amazon.awssdk.services.ec2.model.*;
 
 import net.sf.json.JSONArray;
 import org.springframework.beans.factory.annotation.Autowired;
+import software.amazon.awssdk.services.elasticloadbalancingv2.ElasticLoadBalancingV2Client;
+import software.amazon.awssdk.services.elasticloadbalancingv2.model.DescribeLoadBalancersRequest;
+import software.amazon.awssdk.services.elasticloadbalancingv2.model.DescribeLoadBalancersResponse;
+import software.amazon.awssdk.services.iam.IamClient;
+import software.amazon.awssdk.services.iam.model.*;
+import software.amazon.awssdk.services.rds.RdsClient;
+import software.amazon.awssdk.services.rds.model.DBInstance;
+import software.amazon.awssdk.services.rds.model.DescribeDbInstancesRequest;
+import software.amazon.awssdk.services.rds.model.DescribeDbInstancesResponse;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.*;
 
 
 import java.io.*;
@@ -62,6 +78,92 @@ public class AwsServiceImpl implements AwsService {
             throw new CityHubUnAuthorizedException(e.getMessage());
         }
     }
+
+    private IamClient getIamClient(CredentialInfo info) {
+
+        System.setProperty("aws.accessKeyId", info.getAccessId());
+        System.setProperty("aws.secretAccessKey", info.getAccessToken());
+
+        IamClient iam = IamClient.builder().region(Region.AWS_GLOBAL).build();
+
+        return iam;
+    }
+
+    private CloudWatchClient getCloudWatchClient(CredentialInfo info) {
+
+        System.setProperty("aws.accessKeyId", info.getAccessId());
+        System.setProperty("aws.secretAccessKey", info.getAccessToken());
+
+        CloudWatchClient cw = CloudWatchClient.builder().region(Region.of(info.getRegion())).build();
+
+        return cw;
+    }
+
+    private RdsClient getRdsClient(CredentialInfo info) {
+
+        System.setProperty("aws.accessKeyId", info.getAccessId());
+        System.setProperty("aws.secretAccessKey", info.getAccessToken());
+
+        RdsClient rds = RdsClient.builder().region(Region.of(info.getRegion())).build();
+
+        return rds;
+    }
+
+    private S3Client getS3Client(CredentialInfo info) {
+
+        System.setProperty("aws.accessKeyId", info.getAccessId());
+        System.setProperty("aws.secretAccessKey", info.getAccessToken());
+
+        S3Client s3 = S3Client.builder().region(Region.of(info.getRegion())).build();
+
+        return s3;
+    }
+
+    private ElasticLoadBalancingV2Client getElbClient(CredentialInfo info) {
+
+        System.setProperty("aws.accessKeyId", info.getAccessId());
+        System.setProperty("aws.secretAccessKey", info.getAccessToken());
+
+        ElasticLoadBalancingV2Client elb = ElasticLoadBalancingV2Client.builder().region(Region.of(info.getRegion())).build();
+
+        return elb;
+    }
+
+    private CostExplorerClient getCostClient(CredentialInfo info) {
+
+        System.setProperty("aws.accessKeyId", info.getAccessId());
+        System.setProperty("aws.secretAccessKey", info.getAccessToken());
+
+        CostExplorerClient ce = CostExplorerClient.builder().region(Region.AWS_GLOBAL).build();
+
+        return ce;
+    }
+
+    public boolean validateCredential(CredentialInfo info) {
+        boolean isValid = true;
+
+        String accessKey = System.getProperty("aws.accessKeyId");
+        String secretAccessKey = System.getProperty("aws.secretAccessKey");
+
+        System.setProperty("aws.accessKeyId", info.getAccessId());
+        System.setProperty("aws.secretAccessKey", info.getAccessToken());
+        Ec2Client ec2 = Ec2Client.builder().region(Region.of(info.getRegion())).build();
+        DescribeInstancesRequest request = DescribeInstancesRequest.builder().build();
+
+        try {
+            DescribeInstancesResponse response = ec2.describeInstances(request);
+        } catch (Ec2Exception e) {
+            if (e.awsErrorDetails().errorCode().equals("AuthFailure")) {
+                isValid = false;
+                System.setProperty("aws.accessKeyId", accessKey);
+                System.setProperty("aws.secretAccessKey", secretAccessKey);
+            }
+            logger.error("Failed to validate credential : '{}'", e.getMessage());
+        }
+
+        return isValid;
+    }
+
     public List<ServerInfo> getServers(CredentialInfo credentialInfo, Boolean webCheck) {
         if (credentialInfo == null) throw new CredentialException();
 
@@ -142,7 +244,7 @@ public class AwsServiceImpl implements AwsService {
         }
     }
 
-        public List<ServerInfo> getServers_Search(CredentialInfo credentialInfo, String value, String type) {
+    public List<ServerInfo> getServers_Search(CredentialInfo credentialInfo, String value, String type) {
         if (credentialInfo == null) throw new CredentialException();
 
         String jsonString2 = null;
@@ -236,11 +338,14 @@ public class AwsServiceImpl implements AwsService {
             for (int i = 0; i < info.getId().length(); i++) {
 
                 if (info.getId() != null && info.getId().equals(id)) {
+                    System.out.println("list0_aws_server = " + list);
 
                     list.add(info);
+                    System.out.println("list1_aws_server = " + list);
                     ec2.close();
                     break;
                 } else {
+                    System.out.println("list2_aws_server = " + list);
                 }
             }
             try {
@@ -268,10 +373,12 @@ public class AwsServiceImpl implements AwsService {
                     info2.setDisk(getVolumeSize(credentialInfo, info2.getId()));
                     list2.add(info2);
 
+                    System.out.println("list1_aws_server = " + list2);
                     ec2.close();
                     break;
 
                 } else {
+                    System.out.println("list2_aws_server = " + list2);
 
                 }
             }
@@ -309,6 +416,17 @@ public class AwsServiceImpl implements AwsService {
         } else {
             return jsonArray2;
         }
+    }
+
+    public FlavorInfo getFlavor(CredentialInfo credentialInfo, String osType, String instanceType){
+        FlavorInfo flavorInfo = null;
+        List<FlavorInfo> flavorInfos = getFlavors(credentialInfo, osType);
+        for(FlavorInfo temp : flavorInfos){
+            if(temp.getInstanceType().equals(instanceType)){
+                flavorInfo = temp;
+            }
+        }
+        return flavorInfo;
     }
 
     public Object createServer(CredentialInfo credentialInfo, CreateServerInfo createServerInfo, Boolean webCheck) {
@@ -423,6 +541,72 @@ public class AwsServiceImpl implements AwsService {
 
     }
 
+    @Override
+    public ServerInfo start(CredentialInfo credentialInfo, String serverId) {
+        if (credentialInfo == null) throw new CredentialException();
+
+        Ec2Client ec2 = getEc2Client(credentialInfo);
+        InstanceStateChange stateChange;
+
+        StartInstancesRequest request = StartInstancesRequest.builder().instanceIds(serverId).build();
+        StartInstancesResponse response = ec2.startInstances(request);
+        stateChange = response.startingInstances().get(0);
+
+        ServerInfo serverInfo = new ServerInfo();
+
+        DescribeInstancesRequest req = DescribeInstancesRequest.builder().instanceIds(serverId).build();
+        DescribeInstancesResponse res = ec2.describeInstances(req);
+        serverInfo = new ServerInfo(res.reservations().get(0).instances().get(0));
+
+        ec2.close();
+
+        return serverInfo;
+    }
+
+    @Override
+    public ServerInfo stop(CredentialInfo credentialInfo, String serverId) {
+        if (credentialInfo == null) throw new CredentialException();
+
+        Ec2Client ec2 = getEc2Client(credentialInfo);
+
+        InstanceStateChange stateChange;
+
+        StopInstancesRequest request = StopInstancesRequest.builder().instanceIds(serverId).build();
+        StopInstancesResponse response = ec2.stopInstances(request);
+        stateChange = response.stoppingInstances().get(0);
+
+        ServerInfo serverInfo = new ServerInfo();
+
+        DescribeInstancesRequest req = DescribeInstancesRequest.builder().instanceIds(serverId).build();
+        DescribeInstancesResponse res = ec2.describeInstances(req);
+        serverInfo = new ServerInfo(res.reservations().get(0).instances().get(0));
+
+        ec2.close();
+
+        return serverInfo;
+    }
+
+    @Override
+    public ServerInfo reboot(CredentialInfo credentialInfo, String serverId) {
+        if (credentialInfo == null) throw new CredentialException();
+
+        Ec2Client ec2 = getEc2Client(credentialInfo);
+        InstanceStateChange stateChange;
+
+        RebootInstancesRequest request = RebootInstancesRequest.builder().instanceIds(serverId).build();
+        RebootInstancesResponse response = ec2.rebootInstances(request);
+
+        ServerInfo serverInfo = new ServerInfo();
+
+        DescribeInstancesRequest req = DescribeInstancesRequest.builder().instanceIds(serverId).build();
+        DescribeInstancesResponse res = ec2.describeInstances(req);
+        serverInfo = new ServerInfo(res.reservations().get(0).instances().get(0));
+
+        ec2.close();
+
+        return serverInfo;
+    }
+
 
     @Override
     public Object delete(CredentialInfo credentialInfo, String serverId, Boolean webCheck) {
@@ -437,7 +621,6 @@ public class AwsServiceImpl implements AwsService {
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         mapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
         InstanceStateChange stateChange;
-
 
         if (webCheck) {
             TerminateInstancesRequest request = TerminateInstancesRequest.builder().instanceIds(serverId).build();
@@ -475,6 +658,101 @@ public class AwsServiceImpl implements AwsService {
         }else{
             return null;
         }
+    }
+
+    @Override
+    public ServerInfo monitoring(CredentialInfo credentialInfo, String serverId) {
+        if (credentialInfo == null) throw new CredentialException();
+
+        Ec2Client ec2 = getEc2Client(credentialInfo);
+        InstanceStateChange stateChange;
+
+        MonitorInstancesRequest request = MonitorInstancesRequest.builder().instanceIds(serverId).build();
+        MonitorInstancesResponse response = ec2.monitorInstances(request);
+
+        ServerInfo serverInfo = new ServerInfo();
+
+        DescribeInstancesRequest req = DescribeInstancesRequest.builder().instanceIds(serverId).build();
+        DescribeInstancesResponse res = ec2.describeInstances(req);
+        serverInfo = new ServerInfo(res.reservations().get(0).instances().get(0));
+
+        ec2.close();
+
+        return serverInfo;
+    }
+
+    @Override
+    public ServerInfo unmonitoring(CredentialInfo credentialInfo, String serverId) {
+        if (credentialInfo == null) throw new CredentialException();
+
+        Ec2Client ec2 = getEc2Client(credentialInfo);
+        InstanceStateChange stateChange;
+
+        UnmonitorInstancesRequest request = UnmonitorInstancesRequest.builder().instanceIds(serverId).build();
+        UnmonitorInstancesResponse response = ec2.unmonitorInstances(request);
+
+        ServerInfo serverInfo = new ServerInfo();
+
+        DescribeInstancesRequest req = DescribeInstancesRequest.builder().instanceIds(serverId).build();
+        DescribeInstancesResponse res = ec2.describeInstances(req);
+        serverInfo = new ServerInfo(res.reservations().get(0).instances().get(0));
+
+        ec2.close();
+
+        return serverInfo;
+    }
+
+    public List<RegionInfo> getRegions(CredentialInfo credentialInfo) {
+        if (credentialInfo == null) throw new CredentialException();
+
+        Ec2Client ec2 = getEc2Client(credentialInfo);
+        DescribeRegionsResponse response = ec2.describeRegions();
+
+        List<software.amazon.awssdk.services.ec2.model.Region> Regions = response.regions();
+
+        List<RegionInfo> list = new ArrayList<>();
+
+        for (software.amazon.awssdk.services.ec2.model.Region region : Regions) {
+            RegionInfo info = new RegionInfo(region);
+            System.out.printf(
+                    "Found region %s " +
+                            "with endpoint %s",
+                    region.regionName(),
+                    region.endpoint());
+            System.out.println();
+            list.add(info);
+        }
+
+        ec2.close();
+
+        return list;
+    }
+
+    public List<ZoneInfo> getAvailabilityZones(CredentialInfo credentialInfo) {
+        if (credentialInfo == null) throw new CredentialException();
+
+        Ec2Client ec2 = getEc2Client(credentialInfo);
+        DescribeAvailabilityZonesResponse response = ec2.describeAvailabilityZones();
+
+        List<AvailabilityZone> availabilityZones = response.availabilityZones();
+
+        List<ZoneInfo> list = new ArrayList<>();
+        for (AvailabilityZone zones : availabilityZones) {
+            ZoneInfo info = new ZoneInfo(zones);
+            System.out.printf(
+                    "Found availability zone %s " +
+                            "with status %s " +
+                            "in region %s",
+                    zones.zoneName(),
+                    zones.state(),
+                    zones.regionName());
+            System.out.println();
+            list.add(info);
+        }
+
+        ec2.close();
+        logger.debug("zones return value -- list : {}", list);
+        return list;
     }
 
     @Override
@@ -698,11 +976,14 @@ public class AwsServiceImpl implements AwsService {
             for (int i = 0; i < info.getId().length(); i++) {
 
                 if (info.getId() != null && info.getId().equals(id)) {
+                    System.out.println("list0_aws_voulme = " + list);
 
                     list.add(info);
+                    System.out.println("list1_aws_volume = " + list);
                     ec2.close();
                     break;
                 } else {
+                    System.out.println("list2_aws_volume = " + list);
 
                 }
             }
@@ -711,11 +992,14 @@ public class AwsServiceImpl implements AwsService {
             for (int i = 0; i < info2.getId().length(); i++) {
 
                 if (info2.getId() != null && info2.getId().equals(id)) {
+                    System.out.println("list0_aws_voulme = " + list2);
 
                     list2.add(info2);
+                    System.out.println("list1_aws_volume = " + list2);
                     ec2.close();
                     break;
                 } else {
+                    System.out.println("list2_aws_volume = " + list2);
 
                 }
             }
@@ -735,13 +1019,31 @@ public class AwsServiceImpl implements AwsService {
         JSONArray jsonArray = JSONArray.fromObject(jsonString);
         JSONArray jsonArray2 = JSONArray.fromObject(jsonString2);
 
-
         if (webCheck) {
             return jsonArray;
         }
         else {
             return jsonArray2;
         }
+    }
+
+    public int getVolumeSize(CredentialInfo credentialInfo, String instanceId) {
+        if (credentialInfo == null) throw new CredentialException();
+
+        int volumeSize = 0;
+
+        Ec2Client ec2 = getEc2Client(credentialInfo);
+        DescribeVolumesRequest request = DescribeVolumesRequest.builder().build();
+        DescribeVolumesResponse response = ec2.describeVolumes(request);
+
+        for(Volume volume : response.volumes()) {
+            VolumeInfo info = new VolumeInfo(volume);
+            if(info.getInstanceId().equals(instanceId)){
+                volumeSize = info.getSize();
+            }
+        }
+        ec2.close();
+        return volumeSize;
     }
 
     public Object deleteVolume(CredentialInfo credentialInfo, String volumeId, Boolean webCheck) {
@@ -793,6 +1095,86 @@ public class AwsServiceImpl implements AwsService {
             return null;
         }
 
+    }
+
+    public List<SnapshotInfo> getSnapshots(CredentialInfo credentialInfo) {
+        if (credentialInfo == null) throw new CredentialException();
+
+        Ec2Client ec2 = getEc2Client(credentialInfo);
+
+        DescribeSnapshotsRequest request = DescribeSnapshotsRequest.builder().ownerIds("self").build();
+
+        DescribeSnapshotsResponse response = ec2.describeSnapshots(request);
+
+        List<SnapshotInfo> list = new ArrayList<>();
+        for (Snapshot snapshot : response.snapshots()) {
+            SnapshotInfo info = new SnapshotInfo(snapshot);
+            list.add(info);
+        }
+
+        ec2.close();
+
+        return list;
+    }
+
+    public String getOsType(CredentialInfo credentialInfo, String imageId){
+        String osType = null;
+
+        List<ImageDetailInfo> imageDetailInfos = imageService.getImageDetails("aws", null);
+        for(ImageDetailInfo temp : imageDetailInfos){
+            if(temp.getId().equals(imageId)){
+                osType = temp.getOsType();
+            }
+        }
+        if(osType == null){
+            List<ImageInfo> imageInfos = getImages(credentialInfo);
+            for(ImageInfo temp : imageInfos){
+                if(temp.getId().equals(imageId)){
+                    osType = temp.getOsType();
+                }
+            }
+        }
+
+        return osType;
+    }
+    public List<ImageInfo> getImages(CredentialInfo credentialInfo) {
+
+        if (credentialInfo == null) throw new CredentialException();
+
+        Ec2Client ec2 = getEc2Client(credentialInfo);
+        DescribeImagesRequest request = DescribeImagesRequest.builder().owners("self").build();
+
+        List<ImageInfo> list = new ArrayList<>();
+        DescribeImagesResponse response = ec2.describeImages(request);
+
+        for (Image image : response.images()) {
+            ImageInfo info = new ImageInfo(image);
+            list.add(info);
+        }
+
+        ec2.close();
+
+        return list;
+    }
+
+    public List<KeyPairInfo> getKeyPairs(CredentialInfo credentialInfo) {
+
+        if (credentialInfo == null) throw new CredentialException();
+
+        Ec2Client ec2 = getEc2Client(credentialInfo);
+        DescribeKeyPairsRequest request = DescribeKeyPairsRequest.builder().build();
+
+        List<KeyPairInfo> list = new ArrayList<>();
+        DescribeKeyPairsResponse response = ec2.describeKeyPairs(request);
+
+        for (software.amazon.awssdk.services.ec2.model.KeyPairInfo keypair : response.keyPairs()) {
+            KeyPairInfo info = new KeyPairInfo(keypair);
+            list.add(info);
+        }
+
+        ec2.close();
+
+        return list;
     }
 
     public List<NetworkInfo> getNetworks(CredentialInfo credentialInfo, Boolean webCheck) {
@@ -887,6 +1269,518 @@ public class AwsServiceImpl implements AwsService {
         return jsonArray2;
     }
 
+    public List<SecurityGroupInfo> getSecurityGroups(CredentialInfo credentialInfo) {
+
+        if (credentialInfo == null) throw new CredentialException();
+
+        Ec2Client ec2 = getEc2Client(credentialInfo);
+        DescribeSecurityGroupsRequest request = DescribeSecurityGroupsRequest.builder().build();
+
+        List<SecurityGroupInfo> list = new ArrayList<>();
+        DescribeSecurityGroupsResponse response = ec2.describeSecurityGroups(request);
+
+        for (SecurityGroup securityGroup : response.securityGroups()) {
+            SecurityGroupInfo info = new SecurityGroupInfo(securityGroup);
+            list.add(info);
+        }
+
+        ec2.close();
+
+        return list;
+    }
+
+    public List<AddressInfo> getAddresses(CredentialInfo credentialInfo) {
+
+        if (credentialInfo == null) throw new CredentialException();
+
+        Ec2Client ec2 = getEc2Client(credentialInfo);
+        DescribeAddressesRequest request = DescribeAddressesRequest.builder().build();
+
+        List<AddressInfo> list = new ArrayList<>();
+        DescribeAddressesResponse response = ec2.describeAddresses(request);
+
+        for (Address address : response.addresses()) {
+            AddressInfo info = new AddressInfo(address);
+            list.add(info);
+        }
+
+        ec2.close();
+
+        return list;
+    }
+
+    public List<SubnetInfo> getSubnets(CredentialInfo credentialInfo, String vpcId) {
+
+        if (credentialInfo == null) throw new CredentialException();
+
+        Ec2Client ec2 = getEc2Client(credentialInfo);
+        DescribeSubnetsRequest request = DescribeSubnetsRequest.builder().build();
+
+        List<SubnetInfo> list = new ArrayList<>();
+        DescribeSubnetsResponse response = ec2.describeSubnets(request);
+
+        for (Subnet subnet : response.subnets()) {
+            if (vpcId.equals(subnet.vpcId())) {
+                SubnetInfo info = new SubnetInfo(subnet);
+                list.add(info);
+            }
+        }
+
+        ec2.close();
+
+        return list;
+    }
+
+    public List<VpcInfo> getVpcs(CredentialInfo credentialInfo) {
+
+        if (credentialInfo == null) throw new CredentialException();
+
+        Ec2Client ec2 = getEc2Client(credentialInfo);
+        DescribeVpcsRequest request = DescribeVpcsRequest.builder().build();
+
+        List<VpcInfo> list = new ArrayList<>();
+        DescribeVpcsResponse response = ec2.describeVpcs(request);
+
+        for (Vpc vpc : response.vpcs()) {
+            VpcInfo info = new VpcInfo(vpc);
+            list.add(info);
+        }
+
+        ec2.close();
+
+        return list;
+    }
+
+    public List<UserInfo> getUsers(CredentialInfo credentialInfo) {
+
+        if (credentialInfo == null) throw new CredentialException();
+
+        IamClient iam = getIamClient(credentialInfo);
+        ListUsersRequest request = ListUsersRequest.builder().build();
+
+        List<UserInfo> list = new ArrayList<>();
+        ListUsersResponse response = iam.listUsers(request);
+
+        for (User user : response.users()) {
+            UserInfo info = new UserInfo(user);
+            list.add(info);
+        }
+
+        iam.close();
+
+        return list;
+    }
+
+    public List<GroupInfo> getGroups(CredentialInfo credentialInfo) {
+
+        if (credentialInfo == null) throw new CredentialException();
+
+        IamClient iam = getIamClient(credentialInfo);
+        ListGroupsRequest request = ListGroupsRequest.builder().build();
+
+        List<GroupInfo> list = new ArrayList<>();
+        ListGroupsResponse response = iam.listGroups(request);
+
+        for (Group group : response.groups()) {
+            GroupInfo info = new GroupInfo(group);
+            list.add(info);
+        }
+
+        iam.close();
+
+        return list;
+    }
+
+    public Map<String, Object> getServerMetric(CredentialInfo credentialInfo, RequestMetricInfo requestMetricInfo) {
+
+        CloudWatchClient cw = getCloudWatchClient(credentialInfo);
+
+        List<ServerMonitoringInfo> list = new ArrayList<>();
+
+        Instant endTime = requestMetricInfo.getEndDate().toInstant();
+        Instant startTime = requestMetricInfo.getStartDate().toInstant();
+        Statistic statistics = Statistic.valueOf(requestMetricInfo.getStatistic());
+
+        Dimension dimension = Dimension.builder().name(requestMetricInfo.getName()).value(requestMetricInfo.getId()).build();
+
+        GetMetricStatisticsRequest request = GetMetricStatisticsRequest.builder()
+                .namespace("AWS/EC2")
+                .metricName(requestMetricInfo.getMetricName())
+                .period(requestMetricInfo.getInterval())
+                .statistics(statistics)
+                .dimensions(dimension)
+                .startTime(startTime)
+                .endTime(endTime)
+                .build();
+
+        GetMetricStatisticsResponse response = cw.getMetricStatistics(request);
+
+        HashMap<String, Object> metricData = new HashMap<String, Object>();
+        for (Datapoint datapoint : response.datapoints()) {
+            ServerMonitoringInfo info = new ServerMonitoringInfo();
+            info.setId(requestMetricInfo.getId());
+            info.setStatistics(requestMetricInfo.getId());
+            info.setPeriod(requestMetricInfo.getInterval());
+            info.setMetricName(requestMetricInfo.getMetricName());
+            info.setUnit(datapoint.unitAsString());
+            info.setTimestamp(Timestamp.from(datapoint.timestamp()));
+
+            if (statistics.equals(Statistic.AVERAGE)) {
+                info.setValue(datapoint.average());
+            } else if (statistics.equals(Statistic.MAXIMUM)) {
+                info.setValue(datapoint.maximum());
+            } else if (statistics.equals(Statistic.MINIMUM)) {
+                info.setValue(datapoint.minimum());
+            } else if (statistics.equals(Statistic.SUM)) {
+                info.setValue(datapoint.sum());
+            } else if (statistics.equals(Statistic.SAMPLE_COUNT)) {
+                info.setValue(datapoint.sampleCount());
+            }
+
+
+            list.add(info);
+        }
+
+        List<Timestamp> time = new ArrayList<>();
+        List<Double> value = new ArrayList<>();
+        list.sort((m1, m2) -> m1.getTimestamp().compareTo(m2.getTimestamp()));
+        for (ServerMonitoringInfo info : list) {
+            time.add(info.getTimestamp());
+            value.add(info.getValue());
+        }
+
+        switch (requestMetricInfo.getMetricName()) {
+            case "CPUUtilization":
+                metricData.put("CPUUtilizationCPU", value);
+                break;
+            case "DiskReadBytes":
+                metricData.put("DiskBytesReads", value);
+                break;
+            case "DiskWriteBytes":
+                metricData.put("DiskBytesWrites", value);
+                break;
+            case "DiskReadOps":
+                metricData.put("DiskOpsRead", value);
+                break;
+            case "DiskWriteOps":
+                metricData.put("DiskOpsWrite", value);
+                break;
+            case "NetworkIn":
+                metricData.put("NetworkByteInput", value);
+                break;
+            case "NetworkOut":
+                metricData.put("NetworkByteOutput", value);
+                break;
+            case "NetworkPacketsIn":
+                metricData.put("NetworkPacketsIn Count", value);
+                break;
+            case "NetworkPacketsOut":
+                metricData.put("NetworkPacketsOut Count", value);
+                break;
+            case "StatusCheckFailed":
+                metricData.put("StatusCheckFailedAny", value);
+                break;
+            case "StatusCheckFailed_Instance":
+                metricData.put("StatusCheckFailedInstance", value);
+                break;
+            case "StatusCheckFailed_System":
+                metricData.put("StatusCheckFailedSystem", value);
+                break;
+            case "CPUCreditUsage":
+                metricData.put("CPUCreditUsageCount", value);
+                break;
+            case "CPUCreditBalance":
+                metricData.put("CPUCreditBalanceCount", value);
+                break;
+        }
+
+        cw.close();
+
+        return metricData;
+    }
+
+    public List<GroupInfo> imageTest(CredentialInfo credentialInfo) {
+
+        if (credentialInfo == null) throw new CredentialException();
+
+        Ec2Client ec2 = getEc2Client(credentialInfo);
+        Filter filter = Filter.builder().name("a").values("aaa").build();
+        DescribeImagesRequest request = DescribeImagesRequest.builder().filters(filter).build();
+
+        List<GroupInfo> list = new ArrayList<>();
+        DescribeImagesResponse response = ec2.describeImages(request);
+
+        for (Image image : response.images()) {
+        }
+        ec2.close();
+
+        return list;
+    }
+
+    public List<GroupInfo> resourceTest(CredentialInfo credentialInfo) {
+
+        if (credentialInfo == null) throw new CredentialException();
+
+        CloudWatchClient cw = getCloudWatchClient(credentialInfo);
+        ListDashboardsRequest request = ListDashboardsRequest.builder().build();
+
+        List<GroupInfo> list = new ArrayList<>();
+        ListDashboardsResponse response = cw.listDashboards(request);
+
+        for (DashboardEntry dashboardEntry : response.dashboardEntries()) {
+        }
+        cw.close();
+
+        return list;
+    }
+
+    public List<GroupInfo> s3Test(CredentialInfo credentialInfo) {
+        if (credentialInfo == null) throw new CredentialException();
+
+        S3Client s3 = getS3Client(credentialInfo);
+        ListObjectsV2Request request = ListObjectsV2Request.builder().bucket("innogrid.cost").build();
+
+        List<GroupInfo> list = new ArrayList<>();
+        ListObjectsV2Response response = s3.listObjectsV2(request);
+
+        for (S3Object s3Object : response.contents()) {
+
+            if (s3Object.key().contains("-aws-billing-csv-")) {
+                try {
+                    GetObjectRequest getObjectRequest = GetObjectRequest.builder().bucket("innogrid.cost").key(s3Object.key()).build();
+                    ResponseInputStream<GetObjectResponse> or = s3.getObject(getObjectRequest);
+                    FileOutputStream fos = new FileOutputStream(new File(s3Object.key()));
+                    byte[] read_buf = new byte[1024];
+                    int read_len = 0;
+                    while ((read_len = or.read(read_buf)) > 0) {
+                        fos.write(read_buf, 0, read_len);
+                    }
+                    or.close();
+                    fos.close();
+                } catch (FileNotFoundException e) {
+                    logger.error("Failed to read AWS S3 csv file : '{}'", e.getMessage());
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    logger.error("Failed to read AWS S3 csv file : '{}'", e.getMessage());
+                    e.printStackTrace();
+                }
+            }
+        }
+        s3.close();
+
+        return list;
+    }
+
+    public ResourceInfo getResourceUsage(CredentialInfo credentialInfo) {
+        if (credentialInfo == null) throw new CredentialException();
+
+        Ec2Client ec2 = getEc2Client(credentialInfo);
+        IamClient iam = getIamClient(credentialInfo);
+        RdsClient rds = getRdsClient(credentialInfo);
+        S3Client s3 = getS3Client(credentialInfo);
+        ElasticLoadBalancingV2Client elb = getElbClient(credentialInfo);
+
+        ResourceInfo resourceInfo = new ResourceInfo();
+
+        DescribeInstancesRequest ec2Request = DescribeInstancesRequest.builder().build();
+
+        List<ServerInfo> list = new ArrayList<>();
+        int running = 0;
+        int stopped = 0;
+        int etc = 0;
+        Boolean done = false;
+
+        while (!done) {
+            DescribeInstancesResponse response = ec2.describeInstances(ec2Request);
+
+            for (Reservation reservation : response.reservations()) {
+                for (Instance instance : reservation.instances()) {
+                    ServerInfo info = new ServerInfo(instance);
+                    list.add(info);
+                    if (info.getState().equals("running")) {
+                        running += 1;
+                    } else if (info.getState().equals("stopped")) {
+                        stopped += 1;
+                    } else {
+                        etc += 1;
+                    }
+                }
+            }
+
+            if (response.nextToken() == null) {
+                done = true;
+            }
+        }
+
+        DescribeVolumesRequest volumeRequest = DescribeVolumesRequest.builder().build();
+        DescribeVolumesResponse volumeResponse = ec2.describeVolumes(volumeRequest);
+
+        int diskUsage = 0;
+
+        for (Volume volume : volumeResponse.volumes()) {
+            VolumeInfo info = new VolumeInfo(volume);
+            diskUsage += info.getSize();
+        }
+
+        DescribeSnapshotsRequest snapshotsRequest = DescribeSnapshotsRequest.builder().ownerIds("self").build();
+        DescribeSnapshotsResponse snapshotsResponse = ec2.describeSnapshots(snapshotsRequest);
+
+        DescribeImagesRequest imagesRequest = DescribeImagesRequest.builder().owners("self").build();
+        DescribeImagesResponse imagesResponse = ec2.describeImages(imagesRequest);
+
+        DescribeKeyPairsRequest keyPairsRequest = DescribeKeyPairsRequest.builder().build();
+        DescribeKeyPairsResponse keyPairsResponse = ec2.describeKeyPairs(keyPairsRequest);
+
+        DescribeSubnetsRequest subnetsRequest = DescribeSubnetsRequest.builder().build();
+        DescribeSubnetsResponse subnetsResponse = ec2.describeSubnets(subnetsRequest);
+
+        DescribeNetworkInterfacesRequest networkRequest = DescribeNetworkInterfacesRequest.builder().build();
+        DescribeNetworkInterfacesResponse networkResponse = ec2.describeNetworkInterfaces(networkRequest);
+
+        DescribeSecurityGroupsRequest sgRequest = DescribeSecurityGroupsRequest.builder().build();
+        DescribeSecurityGroupsResponse sgResponse = ec2.describeSecurityGroups(sgRequest);
+
+        DescribeAddressesRequest ipRequest = DescribeAddressesRequest.builder().build();
+        DescribeAddressesResponse ipResponse = ec2.describeAddresses(ipRequest);
+
+        ListUsersRequest userRequest = ListUsersRequest.builder().build();
+        ListUsersResponse userResponse = iam.listUsers(userRequest);
+
+        ListBucketsRequest listBucketsRequest = ListBucketsRequest.builder().build();
+        ListBucketsResponse listBucketsResponse = s3.listBuckets(listBucketsRequest);
+
+        DescribeDbInstancesRequest describeDbInstancesRequest = DescribeDbInstancesRequest.builder().build();
+        DescribeDbInstancesResponse describeDbInstancesResponse = rds.describeDBInstances(describeDbInstancesRequest);
+        int databaseUsage = 0;
+
+        for (DBInstance dbInstance : describeDbInstancesResponse.dbInstances()) {
+            databaseUsage += dbInstance.allocatedStorage();
+        }
+
+        DescribeLoadBalancersRequest loadBalancersRequest = DescribeLoadBalancersRequest.builder().build();
+        DescribeLoadBalancersResponse loadBalancersResponse = elb.describeLoadBalancers(loadBalancersRequest);
+
+        iam.close();
+        ec2.close();
+        rds.close();
+        s3.close();
+
+        resourceInfo.setRunning(running);
+        resourceInfo.setStop(stopped);
+        resourceInfo.setEtc(etc);
+        resourceInfo.setUsers(userResponse.users().size());
+        resourceInfo.setNetworks(networkResponse.networkInterfaces().size());
+        resourceInfo.setSecurityGroups(sgResponse.securityGroups().size());
+        resourceInfo.setPublicIps(ipResponse.addresses().size());
+        resourceInfo.setVolumes(volumeResponse.volumes().size());
+        resourceInfo.setSnapshots(snapshotsResponse.snapshots().size());
+        resourceInfo.setImages(imagesResponse.images().size());
+        resourceInfo.setKeyPairs(keyPairsResponse.keyPairs().size());
+        resourceInfo.setSubnets(subnetsResponse.subnets().size());
+        resourceInfo.setDiskUsage(diskUsage);
+        resourceInfo.setDatabaseCount(describeDbInstancesResponse.dbInstances().size());
+        resourceInfo.setDatabaseUsage(databaseUsage);
+        resourceInfo.setStorageCount(listBucketsResponse.buckets().size());
+        resourceInfo.setLoadBalancer(loadBalancersResponse.loadBalancers().size());
+
+        return resourceInfo;
+    }
+
+    public Image getImageDetail(CredentialInfo credentialInfo, String imageId) {
+        if (credentialInfo == null) throw new CredentialException();
+
+        Image imageInfo = null;
+        try {
+            Ec2Client ec2 = getEc2Client(credentialInfo);
+
+            Filter filter = Filter.builder().name("image-id").values(imageId).build();
+            DescribeImagesRequest request = DescribeImagesRequest.builder().filters(filter).build();
+
+            DescribeImagesResponse response = ec2.describeImages(request);
+            List<Image> list = response.images();
+
+            imageInfo = list.size() > 0 ? list.get(0) : null;
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+        return imageInfo;
+    }
+
+    public List<FlavorInfo> getFlavors(CredentialInfo credentialInfo, String osType) {
+        if (credentialInfo == null) throw new CredentialException();
+
+        AWSCredentials credentials = new BasicAWSCredentials(credentialInfo.getAccessId(), credentialInfo.getAccessToken());
+        AWSPricing pricing = AWSPricingClientBuilder.standard()
+                .withRegion(Regions.AP_SOUTH_1)
+                .withClientConfiguration(new ClientConfiguration())
+                .withCredentials(new AWSStaticCredentialsProvider(credentials))
+                .build();
+
+        String location = "";
+        for (Regions regions : Regions.values()) {
+            if (regions.getName().equals(credentialInfo.getRegion())) {
+                location = regions.getDescription();
+            }
+        }
+
+        boolean isDone = false;
+        String nextToken = null;
+
+        List<String> resultList = new ArrayList<>();
+
+        while (!isDone) {
+            GetProductsResult result;
+
+            if (nextToken == null) {
+                GetProductsRequest request = new GetProductsRequest()
+                        .withServiceCode("AmazonEC2")
+                        .withFilters(new com.amazonaws.services.pricing.model.Filter().withType(FilterType.TERM_MATCH).withField("location").withValue(location))
+                        .withFilters(new com.amazonaws.services.pricing.model.Filter().withType(FilterType.TERM_MATCH).withField("operatingSystem").withValue(osType))
+                        .withFilters(new com.amazonaws.services.pricing.model.Filter().withType(FilterType.TERM_MATCH).withField("currentGeneration").withValue("Yes"))
+                        .withFilters(new com.amazonaws.services.pricing.model.Filter().withType(FilterType.TERM_MATCH).withField("preInstalledSw").withValue("NA"))
+                        .withFilters(new com.amazonaws.services.pricing.model.Filter().withType(FilterType.TERM_MATCH).withField("licenseModel").withValue("No License required"))
+                        .withFilters(new com.amazonaws.services.pricing.model.Filter().withType(FilterType.TERM_MATCH).withField("capacitystatus").withValue("UnusedCapacityReservation"))
+                        .withFilters(new com.amazonaws.services.pricing.model.Filter().withType(FilterType.TERM_MATCH).withField("tenancy").withValue("Shared"));
+                result = pricing.getProducts(request);
+            } else {
+                GetProductsRequest request = new GetProductsRequest()
+                        .withServiceCode("AmazonEC2")
+                        .withNextToken(nextToken)
+                        .withFilters(new com.amazonaws.services.pricing.model.Filter().withType(FilterType.TERM_MATCH).withField("location").withValue(location))
+                        .withFilters(new com.amazonaws.services.pricing.model.Filter().withType(FilterType.TERM_MATCH).withField("operatingSystem").withValue(osType))
+                        .withFilters(new com.amazonaws.services.pricing.model.Filter().withType(FilterType.TERM_MATCH).withField("currentGeneration").withValue("Yes"))
+                        .withFilters(new com.amazonaws.services.pricing.model.Filter().withType(FilterType.TERM_MATCH).withField("preInstalledSw").withValue("NA"))
+                        .withFilters(new com.amazonaws.services.pricing.model.Filter().withType(FilterType.TERM_MATCH).withField("licenseModel").withValue("No License required"))
+                        .withFilters(new com.amazonaws.services.pricing.model.Filter().withType(FilterType.TERM_MATCH).withField("capacitystatus").withValue("UnusedCapacityReservation"))
+                        .withFilters(new com.amazonaws.services.pricing.model.Filter().withType(FilterType.TERM_MATCH).withField("tenant").withValue("Shared"));
+                result = pricing.getProducts(request);
+            }
+
+            resultList.addAll(result.getPriceList());
+
+            if (result.getNextToken() == null) {
+                isDone = true;
+            } else {
+                nextToken = result.getNextToken();
+            }
+        }
+
+        List<FlavorInfo> instanceTypeList = new ArrayList<>();
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            for (int i = 0; i < resultList.size(); i++) {
+                FlavorInfo info = mapper.readValue(resultList.get(i), FlavorInfo.class);
+                info.setInstanceTypeInfo();
+                instanceTypeList.add(info);
+            }
+        } catch (IOException e) {
+            logger.error("Failed to get flavor : '{}'", e.getMessage());
+        }
+
+        Collections.sort(instanceTypeList, Comparator.comparing(FlavorInfo::getInstanceType));
+
+        return instanceTypeList;
+    }
 
     public List<NetworkInfo> getNetwork(CredentialInfo credentialInfo, String NetworkId, Boolean webCheck) {
         if (credentialInfo == null) throw new CredentialException();
@@ -943,6 +1837,7 @@ public class AwsServiceImpl implements AwsService {
             return jsonArray2;
         }
     }
+
 
     public Object deleteNetwork(CredentialInfo credentialInfo, String NetworkId, Boolean webCheck) {
         if (credentialInfo == null) throw new CredentialException();
@@ -1121,152 +2016,5 @@ public class AwsServiceImpl implements AwsService {
         }else{
             return null;
         }
-    }
-
-    public FlavorInfo getFlavor(CredentialInfo credentialInfo, String osType, String instanceType){
-        FlavorInfo flavorInfo = null;
-        List<FlavorInfo> flavorInfos = getFlavors(credentialInfo, osType);
-        for(FlavorInfo temp : flavorInfos){
-            if(temp.getInstanceType().equals(instanceType)){
-                flavorInfo = temp;
-            }
-        }
-        return flavorInfo;
-    }
-
-    public List<FlavorInfo> getFlavors(CredentialInfo credentialInfo, String osType) {
-        if (credentialInfo == null) throw new CredentialException();
-
-        AWSCredentials credentials = new BasicAWSCredentials(credentialInfo.getAccessId(), credentialInfo.getAccessToken());
-        AWSPricing pricing = AWSPricingClientBuilder.standard()
-                .withRegion(Regions.AP_SOUTH_1)
-                .withClientConfiguration(new ClientConfiguration())
-                .withCredentials(new AWSStaticCredentialsProvider(credentials))
-                .build();
-
-        String location = "";
-        for (Regions regions : Regions.values()) {
-            if (regions.getName().equals(credentialInfo.getRegion())) {
-                location = regions.getDescription();
-            }
-        }
-
-        boolean isDone = false;
-        String nextToken = null;
-
-        List<String> resultList = new ArrayList<>();
-
-        while (!isDone) {
-            GetProductsResult result;
-
-            if (nextToken == null) {
-                GetProductsRequest request = new GetProductsRequest()
-                        .withServiceCode("AmazonEC2")
-                        .withFilters(new com.amazonaws.services.pricing.model.Filter().withType(FilterType.TERM_MATCH).withField("location").withValue(location))
-                        .withFilters(new com.amazonaws.services.pricing.model.Filter().withType(FilterType.TERM_MATCH).withField("operatingSystem").withValue(osType))
-                        .withFilters(new com.amazonaws.services.pricing.model.Filter().withType(FilterType.TERM_MATCH).withField("currentGeneration").withValue("Yes"))
-                        .withFilters(new com.amazonaws.services.pricing.model.Filter().withType(FilterType.TERM_MATCH).withField("preInstalledSw").withValue("NA"))
-                        .withFilters(new com.amazonaws.services.pricing.model.Filter().withType(FilterType.TERM_MATCH).withField("licenseModel").withValue("No License required"))
-                        .withFilters(new com.amazonaws.services.pricing.model.Filter().withType(FilterType.TERM_MATCH).withField("capacitystatus").withValue("UnusedCapacityReservation"))
-                        .withFilters(new com.amazonaws.services.pricing.model.Filter().withType(FilterType.TERM_MATCH).withField("tenancy").withValue("Shared"));
-                result = pricing.getProducts(request);
-            } else {
-                GetProductsRequest request = new GetProductsRequest()
-                        .withServiceCode("AmazonEC2")
-                        .withNextToken(nextToken)
-                        .withFilters(new com.amazonaws.services.pricing.model.Filter().withType(FilterType.TERM_MATCH).withField("location").withValue(location))
-                        .withFilters(new com.amazonaws.services.pricing.model.Filter().withType(FilterType.TERM_MATCH).withField("operatingSystem").withValue(osType))
-                        .withFilters(new com.amazonaws.services.pricing.model.Filter().withType(FilterType.TERM_MATCH).withField("currentGeneration").withValue("Yes"))
-                        .withFilters(new com.amazonaws.services.pricing.model.Filter().withType(FilterType.TERM_MATCH).withField("preInstalledSw").withValue("NA"))
-                        .withFilters(new com.amazonaws.services.pricing.model.Filter().withType(FilterType.TERM_MATCH).withField("licenseModel").withValue("No License required"))
-                        .withFilters(new com.amazonaws.services.pricing.model.Filter().withType(FilterType.TERM_MATCH).withField("capacitystatus").withValue("UnusedCapacityReservation"))
-                        .withFilters(new com.amazonaws.services.pricing.model.Filter().withType(FilterType.TERM_MATCH).withField("tenant").withValue("Shared"));
-                result = pricing.getProducts(request);
-            }
-
-            resultList.addAll(result.getPriceList());
-
-            if (result.getNextToken() == null) {
-                isDone = true;
-            } else {
-                nextToken = result.getNextToken();
-            }
-        }
-
-        List<FlavorInfo> instanceTypeList = new ArrayList<>();
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            for (int i = 0; i < resultList.size(); i++) {
-                FlavorInfo info = mapper.readValue(resultList.get(i), FlavorInfo.class);
-                info.setInstanceTypeInfo();
-                instanceTypeList.add(info);
-            }
-        } catch (IOException e) {
-            logger.error("Failed to get flavor : '{}'", e.getMessage());
-        }
-
-        Collections.sort(instanceTypeList, Comparator.comparing(FlavorInfo::getInstanceType));
-
-        return instanceTypeList;
-    }
-
-    public String getOsType(CredentialInfo credentialInfo, String imageId){
-        String osType = null;
-
-        List<ImageDetailInfo> imageDetailInfos = imageService.getImageDetails("aws", null);
-        for(ImageDetailInfo temp : imageDetailInfos){
-            if(temp.getId().equals(imageId)){
-                osType = temp.getOsType();
-            }
-        }
-        if(osType == null){
-            List<ImageInfo> imageInfos = getImages(credentialInfo);
-            for(ImageInfo temp : imageInfos){
-                if(temp.getId().equals(imageId)){
-                    osType = temp.getOsType();
-                }
-            }
-        }
-
-        return osType;
-    }
-
-    public int getVolumeSize(CredentialInfo credentialInfo, String instanceId) {
-        if (credentialInfo == null) throw new CredentialException();
-
-        int volumeSize = 0;
-
-        Ec2Client ec2 = getEc2Client(credentialInfo);
-        DescribeVolumesRequest request = DescribeVolumesRequest.builder().build();
-        DescribeVolumesResponse response = ec2.describeVolumes(request);
-
-        for(Volume volume : response.volumes()) {
-            VolumeInfo info = new VolumeInfo(volume);
-            if(info.getInstanceId().equals(instanceId)){
-                volumeSize = info.getSize();
-            }
-        }
-        ec2.close();
-        return volumeSize;
-    }
-
-    public List<ImageInfo> getImages(CredentialInfo credentialInfo) {
-
-        if (credentialInfo == null) throw new CredentialException();
-
-        Ec2Client ec2 = getEc2Client(credentialInfo);
-        DescribeImagesRequest request = DescribeImagesRequest.builder().owners("self").build();
-
-        List<ImageInfo> list = new ArrayList<>();
-        DescribeImagesResponse response = ec2.describeImages(request);
-
-        for (Image image : response.images()) {
-            ImageInfo info = new ImageInfo(image);
-            list.add(info);
-        }
-
-        ec2.close();
-
-        return list;
     }
 }

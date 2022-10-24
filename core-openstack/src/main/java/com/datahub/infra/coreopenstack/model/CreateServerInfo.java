@@ -33,6 +33,7 @@ public class CreateServerInfo implements Serializable {
     private Boolean volumeCreated;
     private List<String> networkId;
 
+
     public CreateServerInfo() {
     }
 }

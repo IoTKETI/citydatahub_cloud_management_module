@@ -32,7 +32,6 @@ public class NetworkInfo2 implements Serializable {
             this.adminStateUp = info.isAdminStateUp();
             this.shared = info.isShared();
 
-
             if (info.getAvailabilityZones() != null) {
                 for (int i = 0; i < info.getAvailabilityZones().size(); i++) {
                     this.visibilityZones = info.getAvailabilityZones().get(i);

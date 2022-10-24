@@ -23,9 +23,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created by consine2c on 20. 5. 26.
- */
 @Controller
 @RequestMapping("/infra/cloudServices/toast")
 public class ToastController {
@@ -43,8 +40,7 @@ public class ToastController {
     @Autowired
     private CredentialDao credentialDao;
 
-    @RequestMapping(value = {"", "/"}, method = RequestMethod.GET)
-    @ResponseBody
+    @RequestMapping(value = {"", "/"}, method = RequestMethod.GET)    @ResponseBody
     public List<CredentialInfo> getCredentialAWS(@RequestHeader(value = "credential") String credential) {
 
         String type = "toast";
@@ -194,10 +190,6 @@ public class ToastController {
         return toastService.deleteSnapshot(credentialInfo, snapshotId);
     }
 
-    /**
-     * @return servers
-     * @brief Server Create 요청
-     */
     @ResponseStatus(HttpStatus.CREATED)
     @RequestMapping(value = "/servers", method = RequestMethod.POST)
     public @ResponseBody

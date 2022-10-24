@@ -1,8 +1,8 @@
 package com.datahub.infra.coreopenstack.model;
 
-import com.datahub.infra.coreopenstack.util.JsonDateDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.datahub.infra.coreopenstack.util.JsonDateDeserializer;
 import com.datahub.infra.coreopenstack.util.JsonDateSerializer;
 import lombok.Data;
 import org.openstack4j.model.storage.block.Volume;
@@ -69,7 +69,7 @@ public class VolumeInfo implements Serializable {
             VolumeAttachmentInfo info = this.attachmentInfos.get(i);
             List<ServerInfo> result = servers.stream().filter(server -> server.getId().equals(info.getServerId())).collect(Collectors.toList());
             if(result.size() > 0) {
-                info.setServerName(result.get(0).getName());
+                info.setServerName( result.get(0).getName());
             }
         }
     }

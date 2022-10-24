@@ -2,11 +2,13 @@ package com.datahub.infra.apiaws.controller;
 
 import com.datahub.infra.apiaws.service.AwsService;
 import com.datahub.infra.core.model.CredentialInfo;
+import com.datahub.infra.core.model.ImageDetailInfo;
 import com.datahub.infra.core.util.AES256Util;
 import com.datahub.infra.core.util.ObjectSerializer;
 import com.datahub.infra.coreaws.model.*;
 import com.datahub.infra.coredb.dao.CredentialDao;
 import com.datahub.infra.coredb.service.CredentialService;
+import com.datahub.infra.coredb.service.ImageService;
 import net.minidev.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +17,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import software.amazon.awssdk.services.ec2.model.Image;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +33,9 @@ public class AwsController {
     private AwsService awsService;
 
     @Autowired
+    private ImageService imageService;
+
+    @Autowired
     private CredentialService credentialService;
 
     @Autowired
@@ -40,6 +47,7 @@ public class AwsController {
     @RequestMapping(value = {"","/"}, method = RequestMethod.GET)
     @ResponseBody
     public List<CredentialInfo> getCredentialAWS(@RequestHeader(value = "credential") String credential) {
+
         String type = "aws";
         return awsService.getCredential(credentialService.getCredentials(new HashMap<>()), type);
     }
@@ -64,6 +72,7 @@ public class AwsController {
         return null;
     }
 
+
     @RequestMapping(value = "/servers", method = RequestMethod.GET)
     @ResponseBody
     public List<ServerInfo> getServers(
@@ -77,8 +86,9 @@ public class AwsController {
             webCheck = false;
         }
 
-        if(name != null){
+        logger.error("webCheck what ??? = {} ", webCheck);
 
+        if(name != null){
             return awsService.getServers_Search(credentialInfo, name, "name");
         }else if (serverState != null){
             return awsService.getServers_Search(credentialInfo, serverState, "serverState");
@@ -113,6 +123,28 @@ public class AwsController {
         }
 
         return awsService.delete(credentialInfo, serverId, webCheck);
+    }
+
+    @RequestMapping(value = "/zones", method = RequestMethod.GET)
+    @ResponseBody
+    public List<ZoneInfo> getAvailabilityZones(
+            @RequestHeader(value = "credential") String credential
+    ) {
+
+        CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
+
+        return awsService.getAvailabilityZones(credentialInfo);
+    }
+
+    @RequestMapping(value = "/regions", method = RequestMethod.GET)
+    @ResponseBody
+    public List<RegionInfo> getRegions(
+            @RequestHeader(value = "credential") String credential
+    ) {
+
+        CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
+
+        return awsService.getRegions(credentialInfo);
     }
 
     @RequestMapping(value = "/volumes", method = RequestMethod.GET)
@@ -165,6 +197,51 @@ public class AwsController {
         }
 
         return awsService.deleteVolume(credentialInfo, volumeId, webCheck);
+    }
+
+    @RequestMapping(value = "/snapshots", method = RequestMethod.GET)
+    @ResponseBody
+    public List<SnapshotInfo> getSnapshots(
+            @RequestHeader(value = "credential") String credential
+    ) {
+
+        CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
+
+        return awsService.getSnapshots(credentialInfo);
+    }
+
+    @RequestMapping(value = "/images", method = RequestMethod.GET)
+    @ResponseBody
+    public List<ImageInfo> getImages(
+            @RequestHeader(value = "credential") String credential
+    ) {
+
+        CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
+
+        return awsService.getImages(credentialInfo);
+    }
+
+    @RequestMapping(value = "/flavors", method = RequestMethod.GET)
+    @ResponseBody
+    public List<FlavorInfo> getFlavors(
+            @RequestHeader(value = "credential") String credential,
+            @RequestParam(value = "os") String os
+    ) {
+
+        CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
+
+        return awsService.getFlavors(credentialInfo, os);
+    }
+
+    @RequestMapping(value = "/keypairs", method = RequestMethod.GET)
+    @ResponseBody
+    public List<KeyPairInfo> getKeyPairs(
+            @RequestHeader(value = "credential") String credential
+    ) {
+
+        CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
+
+        return awsService.getKeyPairs(credentialInfo);
     }
 
     @ResponseStatus(HttpStatus.CREATED)
@@ -237,6 +314,27 @@ public class AwsController {
         return awsService.deleteNetwork(credentialInfo,networkId,webCheck);
     }
 
+    @RequestMapping(value = "/securitygroups", method = RequestMethod.GET)
+    @ResponseBody
+    public List<SecurityGroupInfo> getSecurityGroups(
+            @RequestHeader(value = "credential") String credential
+    ) {
+
+        CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
+
+        return awsService.getSecurityGroups(credentialInfo);
+    }
+
+    @RequestMapping(value = "/addresses", method = RequestMethod.GET)
+    @ResponseBody
+    public List<AddressInfo> getAddresses(
+            @RequestHeader(value = "credential") String credential
+    ) {
+
+        CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
+
+        return awsService.getAddresses(credentialInfo);
+    }
     @ResponseStatus(HttpStatus.CREATED)
     @RequestMapping(value = "/volumes", method = RequestMethod.POST)
     public @ResponseBody
@@ -272,26 +370,207 @@ public class AwsController {
         return awsService.createServer(credentialInfo, createServerInfo, webCheck);
     }
 
-    @RequestMapping(value = "/flavors", method = RequestMethod.GET)
-    @ResponseBody
-    public List<FlavorInfo> getFlavors(
+    @ResponseStatus(HttpStatus.CREATED)
+    @RequestMapping(value = "/servers/{id}/start", method = RequestMethod.POST)
+    public @ResponseBody
+    ServerInfo startServer(
             @RequestHeader(value = "credential") String credential,
-            @RequestParam(value = "os") String os
+            @PathVariable(value = "id") String serverId
     ) {
-
         CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
 
-        return awsService.getFlavors(credentialInfo, os);
+        return awsService.start(credentialInfo, serverId);
     }
 
-    @RequestMapping(value = "/images", method = RequestMethod.GET)
+    @ResponseStatus(HttpStatus.CREATED)
+    @RequestMapping(value = "/servers/{id}/stop", method = RequestMethod.POST)
+    public @ResponseBody
+    ServerInfo stopServer(
+            @RequestHeader(value = "credential") String credential,
+            @PathVariable(value = "id") String serverId
+    ) {
+        CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
+
+        return awsService.stop(credentialInfo, serverId);
+    }
+
+    @ResponseStatus(HttpStatus.CREATED)
+    @RequestMapping(value = "/servers/{id}/reboot", method = RequestMethod.POST)
+    public @ResponseBody
+    ServerInfo rebootServer(
+            @RequestHeader(value = "credential") String credential,
+            @PathVariable(value = "id") String serverId
+    ) {
+        CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
+
+        return awsService.reboot(credentialInfo, serverId);
+    }
+
+    @ResponseStatus(HttpStatus.CREATED)
+    @RequestMapping(value = "/servers/{id}/delete", method = RequestMethod.POST)
+    public @ResponseBody Object deleteServer(
+            @RequestHeader(value = "credential") String credential,
+            @RequestParam(required = false) Boolean webCheck,
+            @PathVariable(value = "id") String serverId
+    ) {
+        CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
+        if(webCheck == null) {
+            webCheck = false;
+        }
+
+        return awsService.delete(credentialInfo, serverId, webCheck);
+    }
+
+    @ResponseStatus(HttpStatus.CREATED)
+    @RequestMapping(value = "/servers/{id}/monitoring", method = RequestMethod.POST)
+    public @ResponseBody
+    ServerInfo monitoringServer(
+            @RequestHeader(value = "credential") String credential,
+            @PathVariable(value = "id") String serverId
+    ) {
+        CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
+
+        return awsService.monitoring(credentialInfo, serverId);
+    }
+
+    @ResponseStatus(HttpStatus.CREATED)
+    @RequestMapping(value = "/servers/{id}/unmonitoring", method = RequestMethod.POST)
+    public @ResponseBody
+    ServerInfo unMonitoringServer(
+            @RequestHeader(value = "credential") String credential,
+            @PathVariable(value = "id") String serverId
+    ) {
+        CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
+
+        return awsService.unmonitoring(credentialInfo, serverId);
+    }
+
+    @RequestMapping(value = "/groups", method = RequestMethod.GET)
     @ResponseBody
-    public List<ImageInfo> getImages(
+    public List<GroupInfo> getGroups(
             @RequestHeader(value = "credential") String credential
     ) {
 
         CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
 
-        return awsService.getImages(credentialInfo);
+        return awsService.getGroups(credentialInfo);
     }
+
+    @RequestMapping(value = "/users", method = RequestMethod.GET)
+    @ResponseBody
+    public List<UserInfo> getUsers(
+            @RequestHeader(value = "credential") String credential
+    ) {
+
+        CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
+
+        return awsService.getUsers(credentialInfo);
+    }
+
+    @RequestMapping(value = "/servers/{id}/metric", method = RequestMethod.GET)
+    @ResponseBody
+    public Map<String, Object> getServerMetric(
+            @RequestHeader(value = "credential") String credential,
+            @PathVariable(value = "id") String id,
+            @RequestParam(value = "endDate") String endDate,
+            @RequestParam(value = "startDate") String startDate,
+            @RequestParam(value = "InstanceId", required = false, defaultValue = "InstanceId") String name,
+            @RequestParam(value = "metricName") String metricName,
+            @RequestParam(value = "interval") Integer interval,
+            @RequestParam(value = "statistic") String statistic
+    ) {
+
+        CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
+
+        RequestMetricInfo requestMetricInfo = new RequestMetricInfo();
+        requestMetricInfo.setId(id);
+        requestMetricInfo.setEndDate(new Date(Long.parseLong(endDate)));
+        requestMetricInfo.setStartDate(new Date(Long.parseLong(startDate)));
+        requestMetricInfo.setName(name);
+        requestMetricInfo.setMetricName(metricName);
+        requestMetricInfo.setInterval(interval);
+        requestMetricInfo.setStatistic(statistic);
+
+        return awsService.getServerMetric(credentialInfo, requestMetricInfo);
+    }
+
+    @RequestMapping(value = "/vpcs", method = RequestMethod.GET)
+    @ResponseBody
+    public List<VpcInfo> getVpcs(
+            @RequestHeader(value = "credential") String credential
+    ) {
+
+        CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
+
+        return awsService.getVpcs(credentialInfo);
+    }
+
+    @RequestMapping(value = "/subnets", method = RequestMethod.GET)
+    @ResponseBody
+    public List<SubnetInfo> getSubnets(
+            @RequestHeader(value = "credential") String credential,
+            @RequestParam(value = "vpcId") String vpcId
+    ) {
+
+        CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
+
+        return awsService.getSubnets(credentialInfo, vpcId);
+    }
+
+    @RequestMapping(value = "/validate", method = RequestMethod.GET)
+    @ResponseBody
+    public Map<String, Boolean> checkValidate(
+            @RequestHeader(value = "credential") String credential
+    ) {
+
+        CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
+
+        return new HashMap<String, Boolean> (){{
+            put("result", awsService.validateCredential(credentialInfo));
+        }};
+    }
+
+    @RequestMapping(value = "/resource", method = RequestMethod.GET)
+    @ResponseBody
+    public ResourceInfo getResource(
+            @RequestHeader(value = "credential") String credential
+    ) {
+
+        CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
+
+        return awsService.getResourceUsage(credentialInfo);
+    }
+
+    @RequestMapping(value = "/imagedetail/{imageId}", method = RequestMethod.GET)
+    @ResponseBody
+    public ImageDetailInfo getImageDetail(
+            @RequestHeader(value = "credential") String credential,
+            @PathVariable(value = "imageId") String imageId
+    ) {
+
+        CredentialInfo credentialInfo = ObjectSerializer.deserializedData(aes256Util.decrypt(credential));
+
+        Image image = awsService.getImageDetail(credentialInfo, imageId);
+
+        if(image != null) {
+            Map<String, Object> infoMap = new HashMap<>();
+            infoMap.put("id", image.imageId());
+            infoMap.put("type", "aws");
+            infoMap.put("name", image.name());
+            infoMap.put("osType", image.platformAsString());
+            infoMap.put("architecture", image.architectureAsString());
+            infoMap.put("hypervisor", image.hypervisorAsString());
+            infoMap.put("virtualizationType", image.virtualizationTypeAsString());
+            infoMap.put("rootDeviceType", image.rootDeviceTypeAsString());
+            infoMap.put("enaSupport", image.enaSupport().booleanValue() ? "Yes" : "No");
+            infoMap.put("description", image.description());
+
+            ImageDetailInfo imageDetailInfo = new ImageDetailInfo(infoMap);
+
+            return imageDetailInfo;
+        } else {
+            return null;
+        }
+    }
+
 }

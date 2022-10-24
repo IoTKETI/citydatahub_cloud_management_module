@@ -13,6 +13,7 @@ public class NetworkInfo implements Serializable {
     private static final long serialVersionUID = -18128771593660073L;
     private String id;
     private String name;
+    private List<SubnetInfo> neutronSubnets;
     private Boolean shared;
     private Boolean external;
     private String state;
@@ -29,6 +30,13 @@ public class NetworkInfo implements Serializable {
         if(info != null) {
             this.id = info.getId();
             this.name = info.getName();
+            List<SubnetInfo> subnets = new ArrayList<>();
+            if (info.getNeutronSubnets() != null) {
+                for (int i = 0; i < info.getNeutronSubnets().size(); i++) {
+                    subnets.add(new SubnetInfo(info.getNeutronSubnets().get(i)));
+                }
+            }
+            this.neutronSubnets = subnets;
             this.shared = info.isShared();
             this.external = info.isRouterExternal();
             this.state = info.getStatus().name();

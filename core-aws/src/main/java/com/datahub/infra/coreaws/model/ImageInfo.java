@@ -68,6 +68,7 @@ public class ImageInfo implements Serializable {
         }
     }
 
+    // OS 정보 가져오기
     private String getOsType(String osType) {
         String osTypeName = "";
 

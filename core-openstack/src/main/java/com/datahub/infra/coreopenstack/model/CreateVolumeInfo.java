@@ -18,5 +18,4 @@ public class CreateVolumeInfo implements Serializable {
     private String availabilityZone ;
     private String group;
 
-
 }

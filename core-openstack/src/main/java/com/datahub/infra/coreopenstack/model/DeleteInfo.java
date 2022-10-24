@@ -13,5 +13,4 @@ public class DeleteInfo implements Serializable {
 
     public DeleteInfo() {
     }
-
 }

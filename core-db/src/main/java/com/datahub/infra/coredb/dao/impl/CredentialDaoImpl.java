@@ -35,6 +35,11 @@ public class CredentialDaoImpl implements CredentialDao {
 	}
 
 	@Override
+	public int createCredential(CredentialInfo info) {
+		return this.sqlSessionTemplate.insert("createCredential", info);
+	}
+
+	@Override
 	public int deleteCredential(CredentialInfo info) {
 		return this.sqlSessionTemplate.delete("deleteCredential", info);
 	}

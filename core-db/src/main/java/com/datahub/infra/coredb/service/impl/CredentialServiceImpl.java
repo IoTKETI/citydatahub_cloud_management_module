@@ -1,7 +1,9 @@
 package com.datahub.infra.coredb.service.impl;
 
+import com.datahub.infra.core.Constants;
 import com.datahub.infra.core.model.CredentialInfo;
 import com.datahub.infra.coredb.dao.CredentialDao;
+import com.datahub.infra.coredb.service.ActionService;
 import com.datahub.infra.coredb.service.CredentialService;
 import fi.evident.dalesbred.Transactional;
 import org.slf4j.Logger;
@@ -9,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -21,6 +24,9 @@ public class CredentialServiceImpl implements CredentialService {
 
     @Autowired
     private CredentialDao credentialDao;
+
+    @Autowired
+    private ActionService actionService;
 
     @Override
     public CredentialInfo getCredentialsFromMemoryById(String id) {
@@ -70,4 +76,33 @@ public class CredentialServiceImpl implements CredentialService {
         return info;
     }
 
+    @Override
+    public CredentialInfo createCredentialApi(CredentialInfo info) {
+        info.setId(UUID.randomUUID().toString());
+
+        int result = credentialDao.createCredential(info);
+
+        String groupId = "";
+        String getId = "admin";
+
+        String actionId = actionService.initAction(groupId, getId, info.toString(), info.getId(),
+                info.getName(), Constants.ACTION_CODE.CREDENTIAL_CREATE, Constants.HISTORY_TYPE.CREDENTIAL);
+
+        if(result == 1) {
+
+            updateCredentialsFromMemory();
+
+            actionService.setActionResult(actionId, Constants.ACTION_RESULT.SUCCESS);
+
+            return credentialDao.getCredentialInfo(new HashMap<String, Object>(){{
+                put("id", info.getId());
+            }});
+        } else {
+            actionService.setActionResult(actionId, Constants.ACTION_RESULT.FAILED);
+        }
+
+        info.setCreatedAt(new Timestamp(new Date().getTime()));
+
+        return info;
+    }
 }

@@ -6,11 +6,6 @@ import lombok.Data;
 import java.io.Serializable;
 import java.util.List;
 
-/**
- * @author consine2c
- * @date 2020.5.25
- * @brief TOAST Volume Model
- */
 @Data
 public class Snapshots implements Serializable {
     private static final long serialVersionUID = -8629918608557087127L;

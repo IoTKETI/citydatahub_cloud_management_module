@@ -10,7 +10,6 @@ import java.util.List;
 @Data
 public class SizeInfo implements Serializable {
     private static final long serialVersionUID = -4239231582326875852L;
-
     private String offering;
     private String vmSize;
     private String family;

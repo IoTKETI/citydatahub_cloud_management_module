@@ -20,9 +20,9 @@ public class NovaImageInfo implements Serializable {
     private Date created;
     private Date updated;
 
-    public NovaImageInfo() {}
+    public NovaImageInfo () {}
 
-    public NovaImageInfo(Image image) {
+    public NovaImageInfo (Image image) {
         this.id = image.getId();
         this.name = image.getName();
         this.created = image.getCreated();

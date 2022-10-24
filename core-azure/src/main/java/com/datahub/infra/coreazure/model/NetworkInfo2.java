@@ -21,6 +21,7 @@ public class NetworkInfo2 implements Serializable {
 
     public NetworkInfo2(Network network) {
         this.id = java.util.Base64.getEncoder().encodeToString(network.id().getBytes());
+//        this.id = network.id();
         this.name = network.name();
         this.ip = network.addressSpaces().toString().replaceAll("[^0-9./]", "");
         this.region = network.regionName();

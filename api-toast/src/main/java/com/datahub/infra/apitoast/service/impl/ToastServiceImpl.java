@@ -27,11 +27,6 @@ import java.util.*;
 
 import com.datahub.infra.core.util.AES256Util;
 
-/**
- * @author consine2c
- * @date 2020.5.25
- * @brief Toast API Service
- */
 @Service
 public class ToastServiceImpl extends RestApiAbstract implements ToastService {
     private final static Logger logger = LoggerFactory.getLogger(ToastServiceImpl.class);

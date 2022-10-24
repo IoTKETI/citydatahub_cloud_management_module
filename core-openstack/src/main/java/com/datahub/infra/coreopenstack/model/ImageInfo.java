@@ -48,8 +48,9 @@ public class ImageInfo implements Serializable {
         if(image != null) {
             this.id = image.getId();
             this.name = image.getName();
-            this.type = image.getAdditionalPropertyValue("image_type");
+            this.type = image.getAdditionalPropertyValue("block_device_mapping");
             if (this.type == null) this.type = "image";
+            else this.type = "snapshot";
             this.state = image.getStatus().value();
             this.visibility = image.getVisibility().value();
             this.isProtected = image.getIsProtected();

@@ -48,11 +48,10 @@ public class ServerInfo2 implements Serializable {
     private String test1;
     private String test2;
     private List<AddressInfo> addresses;
-
     public ServerInfo2() {
     }
 
-    public ServerInfo2(Server server, List<NetworkInfo> networkInfoList) {
+    public ServerInfo2(Server server,List<NetworkInfo> networkInfoList) {
         if (server == null) return;
 
         String tempNetName;
@@ -114,7 +113,7 @@ public class ServerInfo2 implements Serializable {
         }
     }
 
-    public String setNetworkID(List<NetworkInfo> networkInfoList, String networkName) {
+    public String setNetworkID(List<NetworkInfo> networkInfoList,String networkName) {
         String networkId=null;
         for (int i = 0; i < networkInfoList.size(); i++) {
             if (networkInfoList.get(i).getId().equals(networkName) ){
@@ -138,15 +137,5 @@ public class ServerInfo2 implements Serializable {
             default:
                 return state;
         }
-    }
-
-    public AddressInfo getAddressInfo(String addr) {
-        for(int i=0; i<this.addresses.size(); i++) {
-            if(addresses.get(i).getAddr().equals(addr)) {
-                return addresses.get(i);
-            }
-        }
-
-        return null;
     }
 }

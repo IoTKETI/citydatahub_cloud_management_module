@@ -5,11 +5,6 @@ import lombok.Data;
 
 import java.io.Serializable;
 
-/**
- * @author consine2c
- * @date 2020.6.1
- * @brief TOAST ServerInfo Model
- */
 @Data
 public class ServersInfo implements Serializable {
     private static final long serialVersionUID = -8629918608557087127L;

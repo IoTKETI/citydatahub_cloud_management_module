@@ -5,10 +5,12 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.datahub.infra.coreopenstack.util.JsonDateDeserializer;
 import com.datahub.infra.coreopenstack.util.JsonDateSerializer;
 import lombok.Data;
+import org.openstack4j.model.compute.Address;
 import org.openstack4j.model.compute.Server;
 
 import java.io.Serializable;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +37,7 @@ public class ServerInfo implements Serializable {
     private String projectId;
     private String projectName;
     private List<String> volumes;
+    private List<AddressInfo> addresses;
     private Map<String, String> metaData;
     private String keyName;
     private String taskState;
@@ -61,6 +64,20 @@ public class ServerInfo implements Serializable {
         this.metaData = server.getMetadata();
 
         Iterator<String> keys = server.getAddresses().getAddresses().keySet().iterator();
+        List<AddressInfo> list = new ArrayList<>();
+
+        while (keys.hasNext()) {
+            String key = keys.next();
+
+            List<? extends Address> addresses = server.getAddresses().getAddresses().get(key);
+
+            for(int i=0; i<addresses.size(); i++) {
+                AddressInfo info = new AddressInfo(addresses.get(i));
+                info.setNetworkName(key);
+                list.add(info);
+            }
+        }
+        this.addresses = list;
         this.projectId = server.getTenantId();
 
         this.powerState = server.getPowerState();
@@ -68,5 +85,15 @@ public class ServerInfo implements Serializable {
         this.volumes = server.getOsExtendedVolumesAttached();
         this.keyName = server.getKeyName();
         this.taskState = server.getTaskState();
+    }
+
+    public AddressInfo getAddressInfo(String addr) {
+        for(int i=0; i<this.addresses.size(); i++) {
+            if(addresses.get(i).getAddr().equals(addr)) {
+                return addresses.get(i);
+            }
+        }
+
+        return null;
     }
 }

@@ -10,12 +10,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
-/**
- * @author ksh1006@innogrid.com
- * @date  2020-05-26
- * @brief RESTful API 구현을 위한 추상클래스
- * @details
- */
 public abstract class RestApiAbstract{
   Logger logger = LoggerFactory.getLogger(RestApiAbstract.class);
 

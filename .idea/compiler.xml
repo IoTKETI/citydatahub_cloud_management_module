@@ -8,15 +8,16 @@
         <outputRelativeToContentRoot value="true" />
         <module name="service-registry" />
         <module name="api-aws" />
-        <module name="core-azure" />
-        <module name="core-toast" />
-        <module name="api-azure" />
+        <module name="core-db" />
+        <module name="api-openstack" />
+        <module name="core-aws" />
+        <module name="client" />
         <module name="core-openstack" />
         <module name="api-toast" />
+        <module name="api-azure" />
+        <module name="core-toast" />
+        <module name="core-azure" />
         <module name="core" />
-        <module name="core-db" />
-        <module name="core-aws" />
-        <module name="api-openstack" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
@@ -24,6 +25,7 @@
       <module name="api-azure" target="1.8" />
       <module name="api-openstack" target="1.8" />
       <module name="api-toast" target="1.8" />
+      <module name="client" target="1.8" />
       <module name="core" target="1.8" />
       <module name="core-aws" target="1.8" />
       <module name="core-azure" target="1.8" />
@@ -40,6 +42,7 @@
       <module name="api-azure" options="-parameters" />
       <module name="api-openstack" options="-parameters" />
       <module name="api-toast" options="-parameters" />
+      <module name="client" options="-parameters" />
       <module name="core" options="-parameters" />
       <module name="core-aws" options="-parameters" />
       <module name="core-azure" options="-parameters" />
