@@ -53,16 +53,22 @@
 + Generate sources and update folder for all projects
     + Code update 후 Maven update
     + root 선택후 clean -> complie -> install 순으로 Maven Update 
++ jar 파일 생성 후 jar 파일 실행
 
 ### Start Citydatahub Cloud Management Module
 + Application 실행
     + ServiceRegistryApplication
     + ApiAwsApplication
     + ApiAzureApplication
+    + ApiToastApplication
     + ApiOpenstackApplication
+    + clientApplication
 
++ Application 설정
+    + 각 모듈 -> src -> main -> resources -> application.properties에서 설정
+    
 + Application 확인
-    + localhost:9000에서 확인 가능
+    + application.properties에서 적용한 port 번호로 확인 가능
 
 + API 규격
     + `WG1-2020-0024R01-인프라 모듈 API 현행화.hwp` 참고
