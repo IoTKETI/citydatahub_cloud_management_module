@@ -66,10 +66,8 @@ public class AzureServiceImpl implements AzureService {
 
             if(credentialInfo.getProjectId()==null ||credentialInfo.getProjectId().isEmpty()){
                 azure = authenticated.withDefaultSubscription();
-                logger.error("azure111 = " + azure);
             }else{
                 azure = authenticated.withSubscription(credentialInfo.getSubscriptionId());
-                logger.error("azure222 = " + azure);
             }
             this.subscriptionDisplayName = azure.subscriptions().getById(azure.subscriptionId()).displayName();
             this.subscriptionId = azure.subscriptionId();
@@ -164,9 +162,6 @@ public class AzureServiceImpl implements AzureService {
         List<ServerInfo2> list2 = new ArrayList<>();
         Azure azure = Credential(credentialInfo);
         PagedList<VirtualMachine> vms = azure.virtualMachines().list();
-
-
-        logger.error("AzureServiceImpl, getServers, webCheck? = {}", webCheck);
 
         if(webCheck) {
             for (VirtualMachine vm : vms) {
@@ -674,15 +669,10 @@ public class AzureServiceImpl implements AzureService {
         JSONArray jsonArray2 = JSONArray.fromObject(jsonString2);
 
         if (webCheck) {
-            logger.error("-------- jsonArray -------- ==== " + jsonArray);
             return jsonArray;
         }
         else {
-            logger.error("-------- jsonArray2 -------- ==== " + jsonArray2);
-            //생성 성공 시 리턴 값이 없다 하면
-            return null;
-            //생성 성공 시 리턴 값이 필요 하다 하면
-//            return jsonArray2;
+            return jsonArray2;
         }
     }
 
@@ -913,11 +903,9 @@ public class AzureServiceImpl implements AzureService {
 
 
         if (webCheck) {
-//            logger.error("-------- jsonArray -------- ==== " + jsonArray);
             return jsonArray;
         }
         else {
-//            logger.error("-------- jsonArray2 -------- ==== " + jsonArray2);
             return jsonArray2;
         }
     }
@@ -983,8 +971,6 @@ public class AzureServiceImpl implements AzureService {
         }
         else{
             DiskInfo2 diskInfo = new DiskInfo2(disk);
-//            diskInfo.setSubscriptionId(this.subscriptionId);
-//            diskInfo.setSubscriptionDisplayName(this.subscriptionDisplayName);
             list2.add(diskInfo);
         }
         try {
@@ -1003,11 +989,9 @@ public class AzureServiceImpl implements AzureService {
 
 
         if (webCheck) {
-//            logger.error("-------- jsonArray -------- ==== " + jsonArray);
             return jsonArray;
         }
         else {
-//            logger.error("-------- jsonArray2 -------- ==== " + jsonArray2);
             return jsonArray2;
         }
     }
@@ -1083,14 +1067,11 @@ public class AzureServiceImpl implements AzureService {
 
 
         if (webCheck) {
-//            logger.error("-------- jsonArray -------- ==== " + jsonArray);
             return jsonArray;
         }
         else {
-//            logger.error("-------- jsonArray2 -------- ==== " + jsonArray2);
             return jsonArray2;
         }
-//        return list;
     }
 
     public List<NetworkInfo> getNetworks_Search(CredentialInfo credentialInfo, String resourceGroup, String region, String value, String type) {
@@ -1167,23 +1148,16 @@ public class AzureServiceImpl implements AzureService {
             info.setSubscriptionId(this.subscriptionId);
             info.setSubscriptionDisplayName(this.subscriptionDisplayName);
 
-
-//            System.out.println("getId = " + info.getId());
-//            System.out.println("moduleName1 = " + moduleName);
             String moduleName2 = "/" + moduleName;
-//            System.out.println("moduleName2 = " + moduleName2);
 
             if (webCheck) {
                 for (int i = 0; i < info.getId().length(); i++) {
 
                     if (info.getId() != null && info.getId().equals(moduleName2)) {
-//                        System.out.println("list0 = " + list);
 
                         list.add(info);
-//                        return list;
                         break;
                     } else {
-//                        System.out.println("list2 = " + list);
 
                     }
                 }
@@ -1215,11 +1189,9 @@ public class AzureServiceImpl implements AzureService {
 
 
         if (webCheck) {
-//            logger.error("-------- jsonArray -------- ==== " + jsonArray);
             return jsonArray;
         }
         else {
-//            logger.error("-------- jsonArray2 -------- ==== " + jsonArray2);
             return jsonArray2;
         }
     }
@@ -1272,27 +1244,19 @@ public class AzureServiceImpl implements AzureService {
             NetworkInfo2 temp = new NetworkInfo2(virtualNetwork1);
             info2.add(temp);
         }
-//        logger.error("info2 : {}", info2);
         try {
             jsonString = mapper.writeValueAsString(info);
             jsonString2 = mapper.writeValueAsString(info2);
         } catch (IOException e) {
             e.printStackTrace();
         }
-//        logger.error("jsonString2 : {}", jsonString2);
         JSONArray jsonArray = JSONArray.fromObject(jsonString);
         JSONArray jsonArray2 = JSONArray.fromObject(jsonString2);
         if (webCheck) {
             return jsonArray;
         }else{
-            //생성 성공 시 리턴 값이 없다 하면
-            return null;
-            //생성 성공 시 리턴 값이 필요 하다 하면
-//            return jsonArray2;
+            return jsonArray2;
         }
-
-
-
     }
 
     public DeleteInfo deleteNetwork(CredentialInfo credentialInfo, String moduleName, Boolean webCheck) {
@@ -1464,7 +1428,6 @@ public class AzureServiceImpl implements AzureService {
         resultMap.put("genericResourcesSummary", getGenericResourcesSummary(credentialInfo));
         resultMap.put("storageSummary", getStorageSummary(credentialInfo));
         resultMap.put("networkSummary", getNetworkSummary(credentialInfo));
-//        resultMap.put("serverSummary", getServerSummary(cloudId));
 
         return resultMap;
     }
@@ -1665,7 +1628,6 @@ public class AzureServiceImpl implements AzureService {
 
             }
         }
-//        metricData = reChangeMetricData(metricData);
         return metricData;
     }
 
@@ -1751,17 +1713,11 @@ public class AzureServiceImpl implements AzureService {
     }
 
     public boolean useLoop(String[] arr, String targetValue) {
-
         for (String s : arr) {
-
             if (s.equals(targetValue))
-
                 return true;
-
         }
-
         return false;
-
     }
 
     @Override

@@ -338,14 +338,11 @@ public class AwsServiceImpl implements AwsService {
             for (int i = 0; i < info.getId().length(); i++) {
 
                 if (info.getId() != null && info.getId().equals(id)) {
-                    System.out.println("list0_aws_server = " + list);
 
                     list.add(info);
-                    System.out.println("list1_aws_server = " + list);
                     ec2.close();
                     break;
                 } else {
-                    System.out.println("list2_aws_server = " + list);
                 }
             }
             try {
@@ -373,12 +370,10 @@ public class AwsServiceImpl implements AwsService {
                     info2.setDisk(getVolumeSize(credentialInfo, info2.getId()));
                     list2.add(info2);
 
-                    System.out.println("list1_aws_server = " + list2);
                     ec2.close();
                     break;
 
                 } else {
-                    System.out.println("list2_aws_server = " + list2);
 
                 }
             }
@@ -536,7 +531,7 @@ public class AwsServiceImpl implements AwsService {
         if (webCheck) {
             return jsonArray;
         }else{
-            return null;
+            return jsonArray2;
         }
 
     }
@@ -976,14 +971,11 @@ public class AwsServiceImpl implements AwsService {
             for (int i = 0; i < info.getId().length(); i++) {
 
                 if (info.getId() != null && info.getId().equals(id)) {
-                    System.out.println("list0_aws_voulme = " + list);
 
                     list.add(info);
-                    System.out.println("list1_aws_volume = " + list);
                     ec2.close();
                     break;
                 } else {
-                    System.out.println("list2_aws_volume = " + list);
 
                 }
             }
@@ -992,14 +984,11 @@ public class AwsServiceImpl implements AwsService {
             for (int i = 0; i < info2.getId().length(); i++) {
 
                 if (info2.getId() != null && info2.getId().equals(id)) {
-                    System.out.println("list0_aws_voulme = " + list2);
 
                     list2.add(info2);
-                    System.out.println("list1_aws_volume = " + list2);
                     ec2.close();
                     break;
                 } else {
-                    System.out.println("list2_aws_volume = " + list2);
 
                 }
             }
@@ -2014,7 +2003,7 @@ public class AwsServiceImpl implements AwsService {
         if (webCheck) {
             return jsonArray;
         }else{
-            return null;
+            return jsonArray2;
         }
     }
 }
