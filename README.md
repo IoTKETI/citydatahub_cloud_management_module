@@ -67,6 +67,9 @@
 + Application 설정
     + 각 모듈 -> src -> main -> resources -> application.properties에서 설정
     
++ Log 경로 설정
+    + 각 모듈 -> src -> main -> resources -> logback-spring.xml에서 각 환경에 맞게 경로 설정
+    
 + Application 확인
     + application.properties에서 적용한 port 번호로 확인 가능
 
