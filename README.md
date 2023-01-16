@@ -61,8 +61,6 @@
   + 프라이빗 클라우드(Openstack) 관리를 위한 Database 연동 및 관리 모듈
 + core-toast
   + 퍼블릭 클라우드(TOAST) 관리를 위한 Database 연동 및 관리 모듈
-+ service-registry
-  + Eureka Service 관리 모듈
 
 ### Citydatahub Cloud Management Module 활용 방안
 
@@ -84,11 +82,10 @@
 + Generate sources and update folder for all projects
     + Code update 후 Maven update
     + root 선택후 clean -> complie -> install 순으로 Maven Update 
-+ api-aws, api-azure, api-openstack, api-toast, client, service-registry 모듈에 대하여 jar파일 생성
++ api-aws, api-azure, api-openstack, api-toast, client 모듈에 대하여 jar파일 생성
 
 ### Start Citydatahub Cloud Management Module
 + Application 실행
-    + ServiceRegistryApplication
     + ApiAwsApplication
     + ApiAzureApplication
     + ApiToastApplication
@@ -109,7 +106,6 @@
       + api-openstack : 9300
       + api-toast : 9500
       + client : 8080
-      + service-registry : 9000
 
 + Application 빌드
     + api-aws, api-azure, api-openstack, api-toast, client, service-registry 모듈 jar 파일 
