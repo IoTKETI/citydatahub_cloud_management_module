@@ -47,7 +47,6 @@ public class CloudServiceController {
             @RequestParam(required = false) String cloudType,
             HttpSession session
     ) {
-
         if(session != null) {
             if(name != null){
                 return apiService.getCredentialsInfo_Search(credentialService.getCredentials(new HashMap<>()), name, "name");
