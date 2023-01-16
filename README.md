@@ -37,6 +37,35 @@
 
  ![1핵심 아키텍처](https://user-images.githubusercontent.com/23303734/163297093-4a518c54-6459-4db5-99a8-48b037da2a7f.png)
 
+### Citydatahub Cloud Management Module 기능
+
++ api-aws
+  + 퍼블릭 클라우드(AWS) 관리를 위한 모듈
++ api-azure
+  + 퍼블릭 클라우드(Azure) 관리를 위한 모듈
++ api-openstack
+  + 프라이빗 클라우드(Openstack) 관리를 위한 모듈
++ api-toast
+  + 퍼블릭 클라우드(TOAST) 관리를 위한 모듈
++ client
+  + 클라우드 credential 관리를 위한 모듈
++ core
+  + 클라우드 credential 관리를 위한 Database 연동 및 관리 모듈
++ core-aws
+  + 퍼블릭 클라우드(AWS) 관리를 위한 Database 연동 및 관리 모듈
++ core-azure
+  + 퍼블릭 클라우드(Azure) 관리를 위한 Database 연동 및 관리 모듈
++ core-db
+  + Database 연동 및 관리 모듈
++ core-openstack
+  + 프라이빗 클라우드(Openstack) 관리를 위한 Database 연동 및 관리 모듈
++ core-toast
+  + 퍼블릭 클라우드(TOAST) 관리를 위한 Database 연동 및 관리 모듈
+
+### Citydatahub Cloud Management Module 활용 방안
+
++ 클라우드 관리 모듈은 다양한 이종 클라우드(퍼블릭 및 프라이빗 클라우드)를 연동하고, 분산되어 있는 이종 클라우드 팜들에서 효과적으로 서비스를 위한 가상 자원을 제공하여 멀티 클라우드 환경에서 스마트시티 뿐만 아니라 다양한 서비스 인프라를 관리할 수 있음
+
 ### Citydatahub Cloud Management Module Setting
 
 + Spring Boot 설치
@@ -53,11 +82,10 @@
 + Generate sources and update folder for all projects
     + Code update 후 Maven update
     + root 선택후 clean -> complie -> install 순으로 Maven Update 
-+ jar 파일 생성 후 jar 파일 실행
++ api-aws, api-azure, api-openstack, api-toast, client 모듈에 대하여 jar파일 생성
 
 ### Start Citydatahub Cloud Management Module
 + Application 실행
-    + ServiceRegistryApplication
     + ApiAwsApplication
     + ApiAzureApplication
     + ApiToastApplication
@@ -72,6 +100,15 @@
     
 + Application 확인
     + application.properties에서 적용한 port 번호로 확인 가능
+    + 모듈별 빌드 순서는 상관 없으며 각 모듈별 기본 port 번호는 아래와 같음
+      + api-aws : 9100
+      + api-azure : 9200
+      + api-openstack : 9300
+      + api-toast : 9500
+      + client : 8080
+
++ Application 빌드
+    + api-aws, api-azure, api-openstack, api-toast, client, service-registry 모듈 jar 파일 
 
 + API 규격
     + `WG1-2020-0024R01-인프라 모듈 API 현행화.hwp` 참고
